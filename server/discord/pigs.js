@@ -1,231 +1,159 @@
-// --------------------------
-// - - - - - FIELDS - - - - -
-// --------------------------
-
-// const pigNames = ['Mr. Pig', 'Piggie Smalls', 'Piggle Rick', 'Swiney Todd', 'The Pig Lebowski'
-// 'Model 01-NK', 'Boarimir', 'Piggy Azalea', 'Cyril Piggis'];
-
-const activeGames = [];
-const gameArchives = [];
-
-const playerStats = {};
-
-const sides = 6;
-const goal = 100;
-const bust = 1;
-
-// -----------------------------
-// - - - - - FUNCTIONS - - - - -
-// -----------------------------
-
-// Returns a random integer 1 - sides, inclusive
-const rollDie = (s) => 1 + Math.floor((s * Math.random()));
-
-// Adds a player to the stat list
-const addPlayer = (name) => {
-  playerStats[`${name}`] = {
-    games: 0,
-    wins: 0,
-    losses: 0,
-    rolls: {
-      total: 0,
-      1: 0,
-      2: 0,
-      3: 0,
-      4: 0,
-      5: 0,
-      6: 0,
-    },
-    turns: 0,
-    profit: 0,
-    busts: 0,
-    bros: 0,
-  };
-
-  return playerStats[`${name}`];
-};
-
-// Starts a game between two players
-const startGame = (playerName, opponentName) => {
-  // Add players to list if new
-  if (!playerStats[`${playerName}`]) { addPlayer(playerName); }
-  if (!playerStats[`${opponentName}`]) { addPlayer(opponentName); }
-
-  // Increment all-time games stats
-  playerStats[`${playerName}`].games++;
-  playerStats[`${opponentName}`].games++;
-
-  // Create new active game object
-  const newGame = {};
-  newGame[`${playerName}`] = {
-    score: 0,
-    turn: [],
-    profit: 0,
-    history: [],
-  };
-  newGame[`${opponentName}`] = {
-    score: 0,
-    turn: [],
-    profit: 0,
-    history: [],
-  };
-  // Whoever was challenged should go first
-  newGame.activePlayer = opponentName;
-  newGame.waitingPlayer = playerName;
-
-  // Add to active games array
-  activeGames.push(newGame);
-};
-
-// Ends a game between two players
-const endGame = (game) => {
-  // Create game archive object
-  const newArchive = {
-    date: {
-      second: 0,
-      minute: 0,
-      hour: 0,
-      day: 0,
-      month: 0,
-      year: 0,
-    },
-    winner: 'TBD',
-    loser: 'TBD',
-  };
-
-  // Get the completion date
-  const now = new Date(); // Grab current date
-  newArchive.date.year = now.getFullYear();
-  newArchive.date.month = now.getMonth() + 1; // Months start at 0
-  newArchive.date.day = now.getDate();
-  newArchive.date.hour = now.getHours();
-  newArchive.date.minute = now.getMinutes();
-  newArchive.date.second = now.getSeconds();
-
-  // Appropriately set winner and loser
-  if (game[`${game.activePlayer}`].score >= goal) {
-    newArchive.winner = game.activePlayer;
-    newArchive.loser = game.waitingPlayer;
-  } else {
-    newArchive.winner = game.waitingPlayer;
-    newArchive.loser = game.activePlayer;
-  }
-
-  playerStats[`${newArchive.winner}`].wins++; // Increment all-time wins stat
-  playerStats[`${newArchive.loser}`].losses++; // Increment all-time losses stat
-
-  // Transfer score and history data of players
-  newArchive[`${newArchive.winner}`] = {
-    score: game[`${newArchive.winner}`].score,
-    history: game[`${newArchive.winner}`].history,
-  };
-  newArchive[`${newArchive.loser}`] = {
-    score: game[`${newArchive.loser}`].score,
-    history: game[`${newArchive.loser}`].history,
-  };
-
-  // Add game to archive
-  gameArchives.push(newArchive);
-
-  // Remove game from active games
-  const index = activeGames.indexOf(game);
-  activeGames.splice(index, 1);
-};
-
-// Ends a player's turn
-// Returns a boolean based on win status
-const endTurn = (g, playerName) => {
-  const game = g;
-  const player = game[`${playerName}`]; // Initialize player
-
-  playerStats[`${playerName}`].profit += player.profit; // Add to all-time profit stat
-  playerStats[`${playerName}`].turns++; // Increment all-time turns stat
-
-  player.score += player.profit; // Add profit to total score
-  player.profit = 0; // Reset profit to zero
-  player.history.push(player.turn); // Add turn to turn history
-  player.turn = []; // Clear current turn array
-
-  // Set winner if necessary
-  if (player.score >= goal) {
-    endGame(game);
-  } else {
-    // Swap current player
-    const otherGuy = game.waitingPlayer;
-    game.waitingPlayer = playerName;
-    game.activePlayer = otherGuy;
-  }
-
-  return player.score;
-};
-
-// Guides a player through their turn
-const takeTurn = (game, playerName, desiredRolls) => {
-  const player = game[`${playerName}`]; // Initialize player
-
-  for (let i = 0; i < desiredRolls; i++) {
-    // Roll and add it to current turn
-    const roll = rollDie(sides);
-    player.turn.push(roll);
-
-    playerStats[`${playerName}`].rolls.total++; // Increment all-time total rolls stat
-    playerStats[`${playerName}`].rolls[`${roll}`]++; // Increment all-time integer rolls stat
-
-    // End turn if busted
-    if (roll === bust) {
-      playerStats[`${playerName}`].busts++; // Increment all-time busts stat
-      player.profit = 0;
-      endTurn(game, playerName);
-      return 0;
-    }
-
-    // For some reason this doesn't properly add if you make it a variable
-    player.profit += roll;
-  }
-
-  return player.profit;
-};
-
-// Bro for it
-const broForIt = (game, playerName) => {
-  const player = game[`${playerName}`]; // Initialize player
-  playerStats[`${playerName}`].bros++; // Increment all-time total bros stat
-
-  while (true) {
-    // Roll and add it to current turn
-    const roll = rollDie(sides);
-    player.turn.push(roll);
-
-    playerStats[`${playerName}`].rolls.total++; // Increment all-time total rolls stat
-    playerStats[`${playerName}`].rolls[`${roll}`]++; // Increment all-time integer rolls stat
-
-    // End turn if busted
-    if (roll === bust) {
-      playerStats[`${playerName}`].busts++; // Increment all-time busts stat
-      player.profit = 0;
-      endTurn(game, playerName);
-      return 0;
-    }
-
-    // Add roll to profit
-    player.profit += roll;
-    if (player.score + player.profit >= goal) {
-      return endTurn(game, playerName);
-    }
-  }
-};
-
 // ---------------------------
-// - - - - - EXPORTS - - - - -
+// - - - - - IMPORTS - - - - -
 // ---------------------------
 
+require('dotenv').config();
+const { ChannelType, PermissionsBitField } = require('discord.js');
+const { getUserFromMention, findActiveGame } = require('./helper.js');
+const {
+  handleStart, handleRoll, handleCall, handleBro, handleStats,
+} = require('./handlers.js');
+const { client } = require('./client.js');
+
+// ----------------------------------
+// - - - - - INITIALIZATION - - - - -
+// ----------------------------------
+
+const pigPenIDs = {};
+
+// ------------------------------------
+// - - - - - HELPER FUNCTIONS - - - - -
+// ------------------------------------
+
+// Creates a new 'pig-pen' text channel
+const buildPen = async (guild) => {
+  // Create a new text channel
+  const newPen = await guild.channels.create({
+    name: 'pig-pen',
+    type: ChannelType.GuildText,
+    permissionOverwrites: [{
+      id: guild.id,
+      deny: [PermissionsBitField.Flags.ManageChannels],
+    }],
+  });
+
+  pigPenIDs[`${guild.id}`].push(newPen.id); // Add to guild's pen IDs
+};
+
+// Logs the bot in with a client token
+const botLogin = (token) => { client.login(token); };
+
+// ------------------------------------
+// - - - - - CLIENT FUNCTIONS - - - - -
+// ------------------------------------
+
+// When a channel gets deleted
+client.on('channelDelete', (channel) => {
+  pigPenIDs[`${channel.guild.id}`].forEach((p) => {
+    if (p === channel.id) {
+      const index = pigPenIDs[`${channel.guild.id}`].indexOf(channel.id);
+      pigPenIDs[`${channel.guild.id}`].splice(index, 1);
+    }
+  });
+});
+
+// When the bot joins a server
+client.on('guildCreate', (guild) => {
+  console.log(`Joined a new guild: ${guild.name}`);
+  pigPenIDs[`${guild.id}`] = [];
+});
+
+// When the bot goes online
+client.on('ready', () => {
+  console.log(`Logged in as ${client.user.tag}!`);
+
+  // Fill any holes
+  client.guilds.cache.forEach((g) => {
+    if (!pigPenIDs[`${g.id}`]) {
+      pigPenIDs[`${g.id}`] = [];
+    }
+  });
+});
+
+// When a message is sent
+client.on('messageCreate', (msg) => {
+  if (msg.author.id === client.user.id) { return; } // Never reply to your own message
+
+  let inPen = false; // Assume we aren't in a pig-pen text channel
+  pigPenIDs[`${msg.guild.id}`].forEach((p) => { // Search through known pig-pen IDs
+    if (p === msg.channel.id) { inPen = true; } // Update inPen if a match is found
+  });
+
+  // v v PURELY FOR EASE OF DEVELOPMENT
+  inPen = true;
+  // ^ ^ REMOVE FOR RELEASE BUILD
+
+  let response = ''; // Initialize response string
+  if (msg.content[0] !== '.') { // Consider non-'game command' messages
+    const [mention, command] = msg.content.split(' '); // Split content into mention and command
+    const targetUser = getUserFromMention(mention); // Get user from mention
+
+    if (!targetUser || targetUser.id !== client.user.id) { return; } // Only respond to bot mentions
+
+    switch (command) { // Respond accordingly
+      case 'help': // Return command information
+        response += '**Mention Commands:** ';
+        response += `\n- Prefix with "${client.user} "`;
+        response += '\n- Recognized in any channel';
+        response += '\n> **help** - *Get command descriptions.*';
+        response += '\n> **pen** - *Create a new pig-pen text channel.*';
+
+        response += '\n\n**Game Commands:** ';
+        response += '\n- Prefix with "." ';
+        response += '\n- Recognized in pig-pen channels';
+        response += '\n> **play <@user>** --- *Begin a game with the mentioned user.*';
+        response += '\n> **roll <int>** --- *Roll a specified number of times.*';
+        response += '\n> **call** --- *End your turn and add to your score.*';
+        response += '\n> **bro** --- *Roll until you win or bust.*';
+        response += '\n> **stats <@user>** --- *View the mentioned user\'s statistics.*';
+
+        msg.reply(response); // Send it
+        break;
+
+      case 'pen': // Build a 'pig-pen' text channel
+        buildPen(msg.guild);
+        msg.reply('I built a brand new pig-pen! Enjoy!'); // Display success
+        break;
+
+      default: // Unrecognized mention command
+        msg.reply('...Oink?'); // Display confusion
+        break;
+    }
+  } else if (inPen) { // Consider messages sent within a pig-pen
+    const trimmedMsg = msg.content.slice(1); // Trim off the '.' at the beginning
+    const [command, param] = trimmedMsg.split(' '); // Split into command and parameter
+    const activeGame = findActiveGame(msg.author.id); // Find active game
+
+    switch (command) { // Respond accordingly
+      case 'stats': // Get a user's statistics
+        handleStats(msg, param);
+        break;
+
+      case 'play': // Begin a game with another user
+        handleStart(msg, param);
+        break;
+
+      case 'roll': // Roll a specified number of times
+        handleRoll(msg, activeGame, param);
+        break;
+
+      case 'call': // Ends the author's turn
+        handleCall(msg, activeGame);
+        break;
+
+      case 'bro': // Roll until you either win or bust
+        handleBro(msg, activeGame);
+        break;
+
+      default: // Unrecognized game command
+        msg.reply('...Oink?'); // Display confusion
+        break;
+    }
+  }
+});
+
+// Exports
 module.exports = {
-  playerStats,
-  activeGames,
-  gameArchives,
-  takeTurn,
-  endTurn,
-  broForIt,
-  startGame,
-  addPlayer,
+  client,
+  botLogin,
 };

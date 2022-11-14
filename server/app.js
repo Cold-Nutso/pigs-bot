@@ -14,7 +14,7 @@ const RedisStore = require('connect-redis')(session);
 const redis = require('redis');
 const csrf = require('csurf');
 const router = require('./router.js');
-const pigBotLogin = require('./discord/index.js');
+const { botLogin } = require('./discord/pigs.js');
 
 const port = process.env.PORT || process.env.NODE_PORT || 3000;
 
@@ -80,4 +80,4 @@ app.listen(port, (err) => {
 });
 
 // Get Mr. Pig to log in
-pigBotLogin(process.env.CLIENT_TOKEN);
+botLogin(process.env.CLIENT_TOKEN);

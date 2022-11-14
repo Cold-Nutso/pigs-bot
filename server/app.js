@@ -1,3 +1,5 @@
+require('dotenv').config(); // Configure environmental variables
+
 const path = require('path');
 const express = require('express');
 const compression = require('compression');
@@ -78,4 +80,4 @@ app.listen(port, (err) => {
 });
 
 // Get Mr. Pig to log in
-pigBotLogin();
+pigBotLogin(process.env.CLIENT_TOKEN);

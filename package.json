@@ -22,7 +22,7 @@
     "Redis",
     "Login"
   ],
-  "author": "Cody Van De Mark / Austin Willoughby",
+  "author": "vitaly Pronin",
   "license": "Apache 2.0",
   "devDependencies": {
     "@babel/core": "^7.20.2",

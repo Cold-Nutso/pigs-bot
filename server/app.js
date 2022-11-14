@@ -12,12 +12,9 @@ const RedisStore = require('connect-redis')(session);
 const redis = require('redis');
 const csrf = require('csurf');
 const router = require('./router.js');
-const pigPenIDs = require('./discord/index.js');
+const pigBotLogin = require('./discord/index.js');
 
-let stupidVar = pigPenIDs;
-stupidVar = process.env.PORT || process.env.NODE_PORT || 3000;
-
-const port = stupidVar;
+const port = process.env.PORT || process.env.NODE_PORT || 3000;
 
 const dbURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1/DomoMaker';
 mongoose.connect(dbURI, (err) => {
@@ -79,3 +76,6 @@ app.listen(port, (err) => {
   if (err) { throw err; }
   console.log(`Listening on port ${port}`);
 });
+
+// Get Mr. Pig to log in
+pigBotLogin();

@@ -473,6 +473,8 @@ client.on('messageCreate', (msg) => {
 
 // Make sure this line is the last line
 // process.env.CLIENT_TOKEN
-client.login(process.env.CLIENT_TOKEN); // Login bot using token
+const pigBotLogin = () => {
+  client.login(process.env.CLIENT_TOKEN); // Login bot using token
+};
 
-module.exports = pigPenIDs;
+module.exports = pigBotLogin;

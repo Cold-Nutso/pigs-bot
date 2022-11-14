@@ -12,8 +12,12 @@ const RedisStore = require('connect-redis')(session);
 const redis = require('redis');
 const csrf = require('csurf');
 const router = require('./router.js');
+const pigPenIDs = require('./discord/index.js');
 
-const port = process.env.PORT || process.env.NODE_PORT || 3000;
+let stupidVar = pigPenIDs;
+stupidVar = process.env.PORT || process.env.NODE_PORT || 3000;
+
+const port = stupidVar;
 
 const dbURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1/DomoMaker';
 mongoose.connect(dbURI, (err) => {

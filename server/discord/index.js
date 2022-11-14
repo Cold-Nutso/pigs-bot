@@ -18,11 +18,9 @@ myIntents.add(
 
 // Create new client
 const client = new Client({ intents: myIntents });
-
 // Client Token is stored as an environmental variable
 
 const pigPenIDs = {};
-
 const diceEmoji = [
   '',
   '<:roll1:1029212478405627944>',
@@ -476,3 +474,5 @@ client.on('messageCreate', (msg) => {
 // Make sure this line is the last line
 // process.env.CLIENT_TOKEN
 client.login(process.env.CLIENT_TOKEN); // Login bot using token
+
+module.exports = pigPenIDs;

@@ -13,7 +13,7 @@ const handleLogin = (e) => {
         return false;
     }
 
-    helper.sendPost(e.target.action, {username, pass, _csrf});
+    helper.sendPostDomo(e.target.action, {username, pass, _csrf});
 
     return false;
 };
@@ -37,7 +37,7 @@ const handleSignup = (e) => {
         return false;
     }
 
-    helper.sendPost(e.target.action, {username, pass, pass2, _csrf});
+    helper.sendPostDomo(e.target.action, {username, pass, pass2, _csrf});
 
     return false;
 };

@@ -33,7 +33,7 @@ const handleDomo = (e) => {
         return false;
     }
 
-    helper.sendPost(e.target.action, {name, age, food, _csrf}, loadDomosFromServer);
+    helper.sendPostDomo(e.target.action, {name, age, food, _csrf}, loadDomosFromServer);
 
     return false;
 };
@@ -51,7 +51,7 @@ const handleDeleteDomo = (e) => {
         return false;
     }
 
-    helper.sendPost(e.target.action, { _id, _csrf }, loadDomosFromServer);
+    helper.sendPostDomo(e.target.action, { _id, _csrf }, loadDomosFromServer);
 
     // This is redundant, but it just wouldn't update properly otherwise
     loadDomosFromServer();

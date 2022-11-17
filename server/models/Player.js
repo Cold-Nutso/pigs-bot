@@ -2,24 +2,23 @@ const mongoose = require('mongoose');
 
 let PlayerModel = {};
 
-// games: 0,
-// wins: 0,
-// losses: 0,
-// rolls: {
-//   total: 0,
-//   1: 0,
-//   2: 0,
-//   3: 0,
-//   4: 0,
-//   5: 0,
-//   6: 0,
-// },
-// turns: 0,
-// profit: 0,
-// busts: 0,
-// bros: 0,
+/* rolls object structure:
+{
+  total: int,
+  1: int,
+  2: int,
+  3: int,
+  4: int,
+  5: int,
+  6: int
+}
+*/
 
 const PlayerSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true,
+  },
   discordID: {
     type: String,
     required: true,
@@ -40,7 +39,7 @@ const PlayerSchema = new mongoose.Schema({
     required: true,
   },
   rolls: {
-    type: Array,
+    type: Object,
     required: true,
   },
   turns: {
@@ -49,6 +48,11 @@ const PlayerSchema = new mongoose.Schema({
     required: true,
   },
   profit: {
+    type: Number,
+    min: 0,
+    required: true,
+  },
+  busts: {
     type: Number,
     min: 0,
     required: true,
@@ -65,6 +69,7 @@ const PlayerSchema = new mongoose.Schema({
 });
 
 PlayerSchema.statics.toAPI = (doc) => ({
+  name: doc.name,
   discordID: doc.discordID,
   games: doc.games,
   wins: doc.wins,
@@ -72,14 +77,11 @@ PlayerSchema.statics.toAPI = (doc) => ({
   rolls: doc.rolls,
   turns: doc.turns,
   profit: doc.profit,
+  busts: doc.busts,
   bros: doc.bros,
 });
 
-PlayerSchema.statics.findByDiscordID = (id, callback) => {
-  const search = { discordID: id };
-
-  return PlayerModel.find(search).select('name age food').lean().exec(callback);
-};
+PlayerSchema.statics.findByDiscordID = (id, callback) => PlayerModel.findOne({ discordID: id }).select('name discordID games wins losses rolls turns profit busts bros').exec(callback);
 
 PlayerModel = mongoose.model('Player', PlayerSchema);
 

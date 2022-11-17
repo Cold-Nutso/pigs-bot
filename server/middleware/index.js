@@ -12,6 +12,7 @@ const requiresLogout = (req, res, next) => {
   return next();
 };
 
+// Force a secure header
 const requiresSecure = (req, res, next) => {
   if (req.headers['x-forwarded-proto'] !== 'https') {
     return res.redirect(`https://${req.hostname}${req.url}`);
@@ -24,6 +25,7 @@ const bypassSecure = (req, res, next) => next();
 module.exports.requiresLogin = requiresLogin;
 module.exports.requiresLogout = requiresLogout;
 
+// Only require secure in a production environment
 if (process.env.NODE_ENV === 'production') {
   module.exports.requiresSecure = requiresSecure;
 } else {

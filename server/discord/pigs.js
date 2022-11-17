@@ -2,13 +2,15 @@
 // - - - - - IMPORTS - - - - -
 // ---------------------------
 
-require('dotenv').config();
 const { ChannelType, PermissionsBitField } = require('discord.js');
-const { getUserFromMention, findActiveGame } = require('./helper.js');
+const config = require('../config.js');
+const { findActiveGame } = require('./game.js');
 const {
-  handleStart, handleRoll, handleCall, handleBro, handleStats,
-} = require('./handlers.js');
-const { client } = require('./client.js');
+  handleStart, handleRoll, handleCall, handleBro, handleStats, help, rules,
+} = require('./commands.js');
+const {
+  client, genPigName, getUserFromMention, getServer, addServer,
+} = require('./helper.js');
 
 // ----------------------------------
 // - - - - - INITIALIZATION - - - - -
@@ -35,9 +37,6 @@ const buildPen = async (guild) => {
   pigPenIDs[`${guild.id}`].push(newPen.id); // Add to guild's pen IDs
 };
 
-// Logs the bot in with a client token
-const botLogin = (token) => { client.login(token); };
-
 // ------------------------------------
 // - - - - - CLIENT FUNCTIONS - - - - -
 // ------------------------------------
@@ -54,36 +53,53 @@ client.on('channelDelete', (channel) => {
 
 // When the bot joins a server
 client.on('guildCreate', (guild) => {
-  console.log(`Joined a new guild: ${guild.name}`);
-  pigPenIDs[`${guild.id}`] = [];
+  console.log(`Joined a new guild: ${guild.name}`); // Log to console
+
+  const sDoc = getServer(guild.id);
+  if (sDoc === null) {
+    addServer(guild);
+    // Snort! Nice to meet you all!
+  } else {
+    // Add any existing pig-pen text channels
+    sDoc.pigPenIDs = []; // Reset the array
+    guild.channels.cache.forEach((c) => {
+      if (c.name === 'pig-pen') { sDoc.pigPenIDs.push(c.id); }
+    });
+
+    // Get a new pig name
+    const newName = genPigName();
+    guild.members.cache.get(client.user.id).setNickname(newName);
+    if (newName === sDoc.pigName) {
+      // Good to be back!
+    } else {
+      // ${gDoc.pigName} told me about you guys!
+      sDoc.pigName = newName;
+    }
+  }
+
+  sDoc.save(); // Save the Server
 });
 
 // When the bot goes online
 client.on('ready', () => {
   console.log(`Logged in as ${client.user.tag}!`);
-
-  // Fill any holes
-  client.guilds.cache.forEach((g) => {
-    if (!pigPenIDs[`${g.id}`]) {
-      pigPenIDs[`${g.id}`] = [];
-    }
-  });
 });
 
 // When a message is sent
-client.on('messageCreate', (msg) => {
+client.on('messageCreate', async (msg) => {
   if (msg.author.id === client.user.id) { return; } // Never reply to your own message
 
   let inPen = false; // Assume we aren't in a pig-pen text channel
-  pigPenIDs[`${msg.guild.id}`].forEach((p) => { // Search through known pig-pen IDs
-    if (p === msg.channel.id) { inPen = true; } // Update inPen if a match is found
+  // Check to make sure
+  const sDoc = await getServer(msg.guild.id);
+  sDoc.pigPenIDs.forEach((p) => {
+    if (p === msg.channel.id) { inPen = true; }
   });
 
   // v v PURELY FOR EASE OF DEVELOPMENT
   inPen = true;
   // ^ ^ REMOVE FOR RELEASE BUILD
 
-  let response = ''; // Initialize response string
   if (msg.content[0] !== '.') { // Consider non-'game command' messages
     const [mention, command] = msg.content.split(' '); // Split content into mention and command
     const targetUser = getUserFromMention(mention); // Get user from mention
@@ -91,28 +107,21 @@ client.on('messageCreate', (msg) => {
     if (!targetUser || targetUser.id !== client.user.id) { return; } // Only respond to bot mentions
 
     switch (command) { // Respond accordingly
-      case 'help': // Return command information
-        response += '**Mention Commands:** ';
-        response += `\n- Prefix with "${client.user} "`;
-        response += '\n- Recognized in any channel';
-        response += '\n> **help** - *Get command descriptions.*';
-        response += '\n> **pen** - *Create a new pig-pen text channel.*';
+      case 'help':
+        help(msg.channel); // Return command information
+        break;
 
-        response += '\n\n**Game Commands:** ';
-        response += '\n- Prefix with "." ';
-        response += '\n- Recognized in pig-pen channels';
-        response += '\n> **play <@user>** --- *Begin a game with the mentioned user.*';
-        response += '\n> **roll <int>** --- *Roll a specified number of times.*';
-        response += '\n> **call** --- *End your turn and add to your score.*';
-        response += '\n> **bro** --- *Roll until you win or bust.*';
-        response += '\n> **stats <@user>** --- *View the mentioned user\'s statistics.*';
-
-        msg.reply(response); // Send it
+      case 'rules':
+        rules(msg.channel); // Return game rules
         break;
 
       case 'pen': // Build a 'pig-pen' text channel
         buildPen(msg.guild);
         msg.reply('I built a brand new pig-pen! Enjoy!'); // Display success
+        break;
+
+      case 'new':
+        addServer(msg.guild);
         break;
 
       default: // Unrecognized mention command
@@ -152,8 +161,10 @@ client.on('messageCreate', (msg) => {
   }
 });
 
+// Logs the bot in with a client token
+const botLogin = () => { client.login(config.token); };
+
 // Exports
 module.exports = {
-  client,
   botLogin,
 };

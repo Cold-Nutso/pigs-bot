@@ -1,4 +1,8 @@
-require('dotenv').config(); // Configure environmental variables
+// ---------------------------
+// - - - - - IMPORTS - - - - -
+// ---------------------------
+
+// import fetch from 'node-fetch';
 
 const path = require('path');
 const express = require('express');
@@ -10,27 +14,24 @@ const mongoose = require('mongoose');
 const expressHandlebars = require('express-handlebars');
 const helmet = require('helmet');
 const session = require('express-session');
-const RedisStore = require('connect-redis')(session);
-const redis = require('redis');
-const csrf = require('csurf');
+const RedisStore = require('connect-redis')(session); // Stores variables in Redis cloud
+const redis = require('redis'); // Connects to Redis
+const csrf = require('csurf'); // Generates unique tokens
+const config = require('./config.js'); // Holds certain environmental variables
 const router = require('./router.js');
 const { botLogin } = require('./discord/pigs.js');
 
-const port = process.env.PORT || process.env.NODE_PORT || 3000;
-
-const dbURI = process.env.MONGODB_URI || 'mongodb://127.0.0.1/DomoMaker';
-mongoose.connect(dbURI, (err) => {
+mongoose.connect(config.connections.mongo, (err) => {
   if (err) {
     console.log('Could not connect to database');
     throw err;
   }
 });
 
-const redisURL = process.env.REDISCLOUD_URL || 'redis://default:pvMNeiBL3VPmgAjIzSm14SoWFz8ogXH0@redis-18624.c91.us-east-1-3.ec2.cloud.redislabs.com:18624';
-
+// Connect to a Redis client
 const redisClient = redis.createClient({
   legacyMode: true,
-  url: redisURL,
+  url: config.connections.redis,
 });
 redisClient.connect().catch(console.error);
 
@@ -40,23 +41,20 @@ app.use(helmet({
   crossOriginEmbedderPolicy: false,
   contentSecurityPolicy: false,
 }));
-app.use('/assets', express.static(path.resolve(`${__dirname}/../hosted/`)));
-app.use(favicon(`${__dirname}/../hosted/img/favicon.png`));
+app.use('/assets', express.static(path.resolve(config.staticAssets.path)));
+app.use(favicon(`${config.staticAssets.path}/img/favicon.png`));
 app.use(compression());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+// Use RedisStore, storing variables in the cloud
 app.use(session({
   key: 'sessionid',
-  store: new RedisStore({
-    client: redisClient,
-  }),
-  secret: 'Domo Arigato',
+  store: new RedisStore({ client: redisClient }),
+  secret: config.secret,
   resave: true,
   saveUninitialized: true,
-  cookie: {
-    httpOnly: true,
-  },
+  cookie: { httpOnly: true },
 }));
 
 app.engine('handlebars', expressHandlebars.engine({ defaultLayout: '' }));
@@ -64,20 +62,21 @@ app.set('view engine', 'handlebars');
 app.set('views', `${__dirname}/../views`);
 app.use(cookieParser());
 
-app.use(csrf());
+app.use(csrf()); // Check for csrf token
 app.use((err, req, res, next) => {
+  // If token is fine, return to next middleware function
   if (err.code !== 'EBADCSRFTOKEN') return next(err);
 
+  // Otherwise, do nothing
   console.log('Missing CSRF token!');
   return false;
 });
 
 router(app);
 
-app.listen(port, (err) => {
+app.listen(config.connections.http.port, (err) => {
   if (err) { throw err; }
-  console.log(`Listening on port ${port}`);
+  console.log(`Listening on port ${config.connections.http.port}`);
 });
 
-// Get Mr. Pig to log in
-botLogin(process.env.CLIENT_TOKEN);
+botLogin();

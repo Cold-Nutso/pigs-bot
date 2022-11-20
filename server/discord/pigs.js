@@ -115,7 +115,7 @@ client.on('messageCreate', async (msg) => {
 
     switch (command) { // Respond accordingly
       case 'stats': // Get a user's statistics
-        handleStats(msg, param);
+        stats(msg, param);
         break;
 
       case 'play': // Begin a game with another user

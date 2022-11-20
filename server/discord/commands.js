@@ -2,12 +2,12 @@
 // - - - - - IMPORTS - - - - -
 // ---------------------------
 
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ChannelType, PermissionsBitField } = require('discord.js');
 const {
-  client, getUserFromID, getUserFromMention, getPlayer,
+  client, getUserFromID, getUserFromMention, getServer, getPlayer,
 } = require('./helper.js');
 const {
-  takeTurn, endTurn, startGame, broForIt, findActiveGame,
+  takeTurn, endTurn, startGame, broForIt,
 } = require('./game.js');
 
 // ----------------------------------
@@ -36,20 +36,20 @@ const help = (channel) => {
       {
         name: 'Mention Commands',
         value: `
-      > Prefix with "${client.user} "\n
-      > Recognized in any channel\n
-      - **help** *Get command descriptions.*\n
-      - **rules** *Get info on how to play the game.*\n
+      > Prefix with "${client.user} "
+      > Recognized in any channel
+      - **help** *Get command descriptions.*
+      - **rules** *Get info on how to play the game.*
       - **pen** *Create a new pig-pen text channel.*`,
       },
       {
         name: 'Game Commands', value: `
-      > Prefix with "."\n
-      > Recognized in pig-pen channels\n
-      - **play <@user>** *Begin a game with the mentioned user.*\n
-      - **roll <int>** *Roll a specified number of times.*\n
-      - **call** *End your turn and add to your score.*\n
-      - **bro** *Roll until you win or bust.*\n
+      > Prefix with "."
+      > Recognized in pig-pen channels
+      - **play <@user>** *Begin a game with the mentioned user.*
+      - **roll <int>** *Roll a specified number of times.*
+      - **call** *End your turn and add to your score.*
+      - **bro** *Roll until you win or bust.*
       - **stats <@user>** *View the mentioned user's statistics.*`,
       },
     );
@@ -69,6 +69,23 @@ const rules = (channel) => {
     );
 
   channel.send({ embeds: [rulesEmbed] }); // Send it
+};
+
+// Creates a new 'pig-pen' text channel
+const buildPen = async (guild) => {
+  // Create a new text channel
+  const newPen = await guild.channels.create({
+    name: 'pig-pen',
+    type: ChannelType.GuildText,
+    permissionOverwrites: [{
+      id: guild.id,
+      deny: [PermissionsBitField.Flags.ManageChannels],
+    }],
+  });
+
+  const sDoc = await getServer(guild.id); // Grab the Server doc
+  sDoc.pigPenIDs.push(newPen.id); // Add pig-pen id
+  await sDoc.save(); // Save Server doc
 };
 
 const writeTurnResponse = (userProfit, userTurn, userScore, turnType) => {
@@ -113,37 +130,37 @@ const writeTurnResponse = (userProfit, userTurn, userScore, turnType) => {
 };
 
 // Gets the ai to take a turn
-const aiTurn = async (channel, activeGame) => {
+const botTurn = async (channel, activeGame, sDoc) => {
   const botID = client.user.id; // Initialize player id
   let response = ''; // Default response string
-  const pDoc = await getPlayer(botID); // Get bot doc
-  const botProfit = broForIt(activeGame, pDoc); // Take the actual turn
+  const pDoc = await getPlayer(botID, channel.guild.id); // Get bot doc
+  const botProfit = broForIt(sDoc, activeGame, pDoc); // Take the actual turn
   await pDoc.save(); // Save player doc
 
   // Grab variables
-  const botHistory = activeGame[`${botID}`].history;
-  const botTurn = botHistory[botHistory.length - 1];
-  const botScore = activeGame[`${botID}`].score;
+  const { history } = activeGame[`${botID}`];
+  const turn = history[history.length - 1];
+  const { score } = activeGame[`${botID}`];
 
   if (botProfit === 0) {
     // Construct response
     response += '**Bust!** I rolled: ';
-    for (let i = 0; i < botTurn.length; i++) {
-      if (i < botTurn.length - 1) { response += `${botTurn[i]}, `; } else { response += `${botTurn[i]}`; }
+    for (let i = 0; i < turn.length; i++) {
+      if (i < turn.length - 1) { response += `${turn[i]}, `; } else { response += `${turn[i]}`; }
     }
-    response += `\nMy total score: ${botScore}`;
+    response += `\nMy total score: ${score}`;
 
     // Calculate past profit
     let pastProfit = -1;
-    botTurn.forEach((e) => { pastProfit += e; });
+    turn.forEach((e) => { pastProfit += e; });
     if (pastProfit > 0) { response += `\nI almost had ${pastProfit} in profit.`; }
   } else {
     // Construct response
     response += 'I rolled: ';
-    for (let i = 0; i < botTurn.length; i++) {
-      if (i < botTurn.length - 1) { response += `${botTurn[i]}, `; } else { response += `${botTurn[i]}`; }
+    for (let i = 0; i < turn.length; i++) {
+      if (i < turn.length - 1) { response += `${turn[i]}, `; } else { response += `${turn[i]}`; }
     }
-    response += `\nMy Final Score: ${botScore}\nI won!`;
+    response += `\nMy Final Score: ${score}\nI won!`;
   }
 
   channel.send(response); // Send it
@@ -151,7 +168,7 @@ const aiTurn = async (channel, activeGame) => {
 
 // Handles input and response for stats command
 // Requires ".stats" and an optional member mention
-const handleStats = async (msg, param) => {
+const stats = async (msg, param) => {
   let targetUser = msg.author; // Set targetUser to author
   // If there's a parameter, assign it to targetUser
   if (param) { targetUser = getUserFromMention(param); }
@@ -159,7 +176,7 @@ const handleStats = async (msg, param) => {
   if (!targetUser) { // If no member could be parsed from the parameter
     msg.reply(`Oink! Your parameter must be a user mention.\nFor example: ${client.user}`);
   } else { // If a member was successfully found
-    const pDoc = await getPlayer(targetUser.id); // Get player doc from database
+    const pDoc = await getPlayer(targetUser.id, msg.channel.guild.id); // Get player doc
 
     const statsEmbed = new EmbedBuilder() // Create a new embed
       .setTitle(`${targetUser.username}'s Statistics`)
@@ -200,7 +217,7 @@ const handleRoll = async (msg, activeGame, param) => {
       return;
     }
 
-    const pDoc = await getPlayer(userID); // Get player doc
+    const pDoc = await getPlayer(userID, msg.channel.guild.id); // Get player doc
     const userProfit = takeTurn(activeGame, pDoc, p); // Take the actual turn
     await pDoc.save(); // Save player doc
 
@@ -218,11 +235,6 @@ const handleRoll = async (msg, activeGame, param) => {
 
     // Send response
     msg.reply(writeTurnResponse(userProfit, userTurn, userScore, 'roll'));
-
-    // Since turn is over, bot should go
-    if (userProfit === 0 && activeGame.activePlayer === client.user.id) {
-      aiTurn(msg.channel, activeGame);
-    }
   } else if (activeGame) {
     if (activeGame.activePlayer === client.user.id) {
       msg.reply('Oink! It\'s my turn!');
@@ -240,7 +252,7 @@ const handleBro = async (msg, activeGame) => {
   const userID = msg.author.id; // Initialize player id
 
   if (activeGame && activeGame.activePlayer === userID) {
-    const pDoc = await getPlayer(userID); // Get player doc
+    const pDoc = await getPlayer(userID, msg.channel.guild.id); // Get player doc
     const userProfit = broForIt(activeGame, pDoc); // Take the actual turn
     await pDoc.save(); // Save player doc
 
@@ -250,11 +262,6 @@ const handleBro = async (msg, activeGame) => {
 
     // Send response
     msg.reply(writeTurnResponse(userProfit, userTurn, userScore, 'bro'));
-
-    // Since turn is over, bot should go
-    if (userProfit === 0 && activeGame.activePlayer === client.user.id) {
-      aiTurn(msg.channel, activeGame);
-    }
   } else if (activeGame) {
     if (activeGame.activePlayer === client.user.id) {
       msg.reply('It\'s my turn!');
@@ -275,7 +282,7 @@ const handleCall = async (msg, activeGame) => {
     // Grab variables
     const userProfit = activeGame[`${userID}`].profit;
 
-    const pDoc = await getPlayer(userID); // Get player doc
+    const pDoc = await getPlayer(userID, msg.channel.guild.id); // Get player doc
     const userScore = endTurn(activeGame, pDoc); // End the actual turn
     await pDoc.save(); // Save player doc
 
@@ -286,69 +293,52 @@ const handleCall = async (msg, activeGame) => {
   } else {
     msg.reply('Oink! You aren\'t in a game right now!');
   }
-
-  // Since turn is over, bot should go
-  if (activeGame.activePlayer === client.user.id) {
-    aiTurn(msg.channel, activeGame);
-  }
 };
 
 // Handles input and response for play command
 // Requires ".play" and an optional member mention
-const handleStart = async (msg, param) => {
-  const player = msg.author;
+const handleStart = async (msg, activeGame, param) => {
+  const { author } = msg;
   const opponent = getUserFromMention(param);
   let response = ''; // Initialize response
 
-  if (!param) {
+  if (!param) { // If there is no parameter
     response += 'In theory, you\'d need another person to play against. Oink.';
-  } else if (!opponent) {
+  } else if (!opponent) { // If the parameter is not a mention
     response += `Oink! Your parameter must be a user mention.\nFor example: ${client.user}`;
-  } else {
-    const activeGame = findActiveGame(player.id); // Check for active game
+  } else if (opponent.id === author.id) { // If the parameter is a self-mention
+    // Make sure no-one's mentioning themselves
+    response += 'Oink! You can\'t play against yourself.';
+  } else if (activeGame !== null) { // If there is an active game
+    const activePlayer = activeGame.activePlayer === author.id; // See who's turn it is
 
-    if (opponent.id === player.id) {
-      // Make sure no-one's mentioning themselves
-      response += 'Oink! You can\'t play against yourself.';
-    } else if (activeGame) {
-      // See who's turn it is
-      const yourTurn = (activeGame.activePlayer === player.id);
-      // THIS SHOULD BE AN ACTUAL USER, NOT JUST A STRING
-      let currOpponentID; // Found out current opponent id
-      if (yourTurn) {
-        currOpponentID = activeGame.waitingPlayer;
-      } else {
-        currOpponentID = activeGame.activePlayer;
-      }
-
-      // Construct response
-      response += `Oink! You're already in a game with ${getUserFromID(currOpponentID)}.`;
-      if (yourTurn) { response += '\nIt\'s your turn, by the way.'; } else { response += '\nYou\'re waiting on their turn.'; }
+    // Construct response
+    response += 'Oink! You\'re already in a game!';
+    if (activePlayer === author.id) {
+      response += '\nIt\'s your turn, by the way.';
     } else {
-      if (opponent.id === client.user.id) { response += 'Sure, let\'s play a game!'; } else { response += `Hey ${opponent}!\n${player} started a game of pigs with you!`; }
-
-      const pDoc = await getPlayer(player.id); // Get player doc
-      const oDoc = await getPlayer(opponent.id); // Get opponent doc
-      startGame(pDoc, oDoc); // Start the actual game
+      response += `\nYou're waiting on ${getUserFromID(activePlayer)}'s turn.`;
     }
+  } else { // If there isn't an active game
+    if (opponent.id === client.user.id) { response += 'Sure, let\'s play a game!'; } else { response += `Hey ${opponent}!\n${author} started a game of pigs with you!`; }
+
+    const pDoc = await getPlayer(author.id, msg.channel.guild.id); // Get player doc
+    const oDoc = await getPlayer(opponent.id, msg.channel.guild.id); // Get opponent doc
+    startGame([oDoc.discordID, pDoc.discordID], msg.channel.guild.id); // Start the actual game
   }
 
   msg.reply(response); // Send it
-
-  const activeGame = findActiveGame(player.id);
-  // Since turn is over, bot should go
-  if (activeGame && activeGame.activePlayer === client.user.id) {
-    aiTurn(msg.channel, activeGame);
-  }
 };
 
 // Exports
 module.exports = {
   help,
   rules,
+  buildPen,
   handleStart,
   handleRoll,
   handleCall,
   handleBro,
-  handleStats,
+  stats,
+  botTurn,
 };

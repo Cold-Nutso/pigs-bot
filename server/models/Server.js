@@ -5,18 +5,21 @@ let ServerModel = {};
 /* activeGame object structure:
 {
     activePlayer: id1,
-    waitingPlayer: id2,
+    turnOrder: [ id1, id2, ... ],
     `${id1}`: { score: int, turn: int[], profit: int, history: int[][] },
-    `${id2}`: { score: int, turn: int[], profit: int, history: int[][] }
+    `${id2}`: { score: int, turn: int[], profit: int, history: int[][] },
+    ...
 }
 */
 
 /* finishedGame object structure:
 {
+    endDate: Date,
     winner: id1,
-    loser: id2,
-    `${id1}`: { score: int, history: int[] },
-    `${id2}`: { score: int, history: int[] }
+    losers: [ id2, ... ],
+    `${id1}`: { score: int, history: int[][] },
+    `${id2}`: { score: int, history: int[][] },
+    ...
 }
 */
 

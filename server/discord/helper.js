@@ -53,40 +53,6 @@ const getUserFromMention = (mention) => {
   return null;
 };
 
-// Gets a Player based on their discord id
-// Adds a new Player if one isn't found
-const getPlayer = async (id) => {
-  // Find player doc from database by discordID property
-  const doc = await Player.findByDiscordID(id);
-  if (doc != null) { return doc; } // Return it
-
-  // Otherwise, set up default data object
-  const defaultData = {
-    name: getUserFromID(id).username,
-    discordID: id,
-    games: 0,
-    wins: 0,
-    losses: 0,
-    rolls: {
-      total: 0,
-      1: 0,
-      2: 0,
-      3: 0,
-      4: 0,
-      5: 0,
-      6: 0,
-    },
-    turns: 0,
-    profit: 0,
-    busts: 0,
-    bros: 0,
-  };
-
-  const newPlayer = new Player(defaultData); // Create a new Player model
-  await newPlayer.save(); // Save it to the database
-  return newPlayer; // Return the new player
-};
-
 // Gets a Server based on its guild id
 const getServer = async (id) => {
   // Find player doc from database by discordID property
@@ -121,6 +87,61 @@ const addServer = async (guild) => {
   return newServer; // Return the new Server
 };
 
+// Gets a Player based on their discord id
+// Adds a new Player if one isn't found
+const getPlayer = async (playerID, guildID) => {
+  // Find player doc from database by discordID property
+  const pDoc = await Player.findByDiscordID(playerID);
+  if (pDoc != null) { return pDoc; } // Return it
+
+  // Otherwise, set up default data object
+  const defaultData = {
+    name: getUserFromID(playerID).username,
+    discordID: playerID,
+    games: 0,
+    wins: 0,
+    losses: 0,
+    rolls: {
+      total: 0,
+      1: 0,
+      2: 0,
+      3: 0,
+      4: 0,
+      5: 0,
+      6: 0,
+    },
+    turns: 0,
+    profit: 0,
+    busts: 0,
+    bros: 0,
+  };
+
+  const newPlayer = new Player(defaultData); // Create a new Player model
+  await newPlayer.save(); // Save it to the database
+
+  if (playerID !== client.user.id) { // Don't bother adding the bot to the Server
+    const sDoc = await getServer(guildID); // Get Server doc
+    sDoc.playerIDs.push(playerID); // Add new id
+    await sDoc.save(); // Save Server doc
+  }
+
+  return newPlayer; // Return the new player
+};
+
+// Returns the active game a player is in
+const findActiveGame = (sDoc, playerID) => {
+  for (let i = 0; i < sDoc.activeGames.length; i++) {
+    const game = sDoc.activeGames[i];
+    for (let n = 0; n < game.turnOrder.length; n++) {
+      if (game.turnOrder[n] === playerID) {
+        return game;
+      }
+    }
+  }
+
+  return null;
+};
+
 // Exports
 module.exports = {
   client,
@@ -130,5 +151,6 @@ module.exports = {
   getUserFromMention,
   getPlayer,
   getServer,
+  findActiveGame,
   addServer,
 };

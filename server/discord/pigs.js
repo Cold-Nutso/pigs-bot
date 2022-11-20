@@ -2,53 +2,32 @@
 // - - - - - IMPORTS - - - - -
 // ---------------------------
 
-const { ChannelType, PermissionsBitField } = require('discord.js');
 const config = require('../config.js');
-const { findActiveGame } = require('./game.js');
 const {
-  handleStart, handleRoll, handleCall, handleBro, handleStats, help, rules,
+  handleStart, handleRoll, handleCall, handleBro, stats, help, rules, buildPen, botTurn,
 } = require('./commands.js');
 const {
-  client, genPigName, getUserFromMention, getServer, addServer,
+  client, genPigName, getUserFromMention, getServer, addServer, findActiveGame,
 } = require('./helper.js');
 
 // ----------------------------------
 // - - - - - INITIALIZATION - - - - -
 // ----------------------------------
 
-const pigPenIDs = {};
-
 // ------------------------------------
 // - - - - - HELPER FUNCTIONS - - - - -
 // ------------------------------------
-
-// Creates a new 'pig-pen' text channel
-const buildPen = async (guild) => {
-  // Create a new text channel
-  const newPen = await guild.channels.create({
-    name: 'pig-pen',
-    type: ChannelType.GuildText,
-    permissionOverwrites: [{
-      id: guild.id,
-      deny: [PermissionsBitField.Flags.ManageChannels],
-    }],
-  });
-
-  pigPenIDs[`${guild.id}`].push(newPen.id); // Add to guild's pen IDs
-};
 
 // ------------------------------------
 // - - - - - CLIENT FUNCTIONS - - - - -
 // ------------------------------------
 
 // When a channel gets deleted
-client.on('channelDelete', (channel) => {
-  pigPenIDs[`${channel.guild.id}`].forEach((p) => {
-    if (p === channel.id) {
-      const index = pigPenIDs[`${channel.guild.id}`].indexOf(channel.id);
-      pigPenIDs[`${channel.guild.id}`].splice(index, 1);
-    }
-  });
+client.on('channelDelete', async (channel) => {
+  const sDoc = await getServer(channel.guild.id); // Grab the Server doc
+  const i = sDoc.pigPenIDs.indexOf(channel.id); // Look for matching pig-pen id
+  if (i > -1) { sDoc.pigPenIDs.splice(i, 1); } // If found, remove from array
+  await sDoc.save(); // Save Server doc
 });
 
 // When the bot joins a server
@@ -116,7 +95,7 @@ client.on('messageCreate', async (msg) => {
         break;
 
       case 'pen': // Build a 'pig-pen' text channel
-        buildPen(msg.guild);
+        await buildPen(msg.guild);
         msg.reply('I built a brand new pig-pen! Enjoy!'); // Display success
         break;
 
@@ -131,7 +110,8 @@ client.on('messageCreate', async (msg) => {
   } else if (inPen) { // Consider messages sent within a pig-pen
     const trimmedMsg = msg.content.slice(1); // Trim off the '.' at the beginning
     const [command, param] = trimmedMsg.split(' '); // Split into command and parameter
-    const activeGame = findActiveGame(msg.author.id); // Find active game
+
+    const activeGame = findActiveGame(sDoc, msg.author.id); // Find active game
 
     switch (command) { // Respond accordingly
       case 'stats': // Get a user's statistics
@@ -139,7 +119,7 @@ client.on('messageCreate', async (msg) => {
         break;
 
       case 'play': // Begin a game with another user
-        handleStart(msg, param);
+        handleStart(msg, activeGame, param);
         break;
 
       case 'roll': // Roll a specified number of times
@@ -157,6 +137,13 @@ client.on('messageCreate', async (msg) => {
       default: // Unrecognized game command
         msg.reply('...Oink?'); // Display confusion
         break;
+    }
+
+    // Bot takes a turn if necessary
+    const botGame = findActiveGame(sDoc, client.user.id);
+    if (botGame !== null && botGame.activePlayer === client.user.id) {
+      botTurn(msg.channel, botGame, sDoc);
+      await sDoc.save();
     }
   }
 });

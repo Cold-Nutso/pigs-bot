@@ -2,15 +2,11 @@
 // - - - - - IMPORTS - - - - -
 // ---------------------------
 
-const { rollDie, getPlayer } = require('./helper.js');
+const { rollDie, getPlayer, getServer } = require('./helper.js');
 
 // ----------------------------------
 // - - - - - INITIALIZATION - - - - -
 // ----------------------------------
-
-// These will be Redis variables I think?
-const activeGames = [];
-const gameArchives = [];
 
 // Basic game rules, might be editable later
 const sides = 6;
@@ -21,131 +17,102 @@ const bust = 1;
 // - - - - - FUNCTIONS - - - - -
 // -----------------------------
 
-// Starts a game between two players
-const startGame = (pDoc, oDoc) => {
-  // Create new active game object
-  const newGame = {};
-  newGame[`${pDoc.discordID}`] = {
-    score: 0,
-    turn: [],
-    profit: 0,
-    history: [],
-  };
-  newGame[`${oDoc.discordID}`] = {
-    score: 0,
-    turn: [],
-    profit: 0,
-    history: [],
-  };
-  // Whoever was challenged should go first
-  newGame.activePlayer = oDoc.discordID;
-  newGame.waitingPlayer = pDoc.discordID;
+// Starts a game
+const startGame = async (turnOrder, guildID) => {
+  const newGame = {}; // Create new active game object
+  newGame.turnOrder = turnOrder; // Set turn order
+  turnOrder.forEach((id) => { // Add id's as properties
+    newGame[`${id}`] = {
+      score: 0, turn: [], profit: 0, history: [],
+    };
+  });
 
-  // Add to active games array
-  activeGames.push(newGame);
+  const activePlayer = turnOrder[0];
+  newGame.activePlayer = activePlayer; // Set who goes first
+
+  const sDoc = await getServer(guildID); // Grab the Server doc
+  sDoc.activeGames.push(newGame); // Add pig-pen id
+  await sDoc.save(); // Save Server doc
 };
 
 // Ends a game between two players
-const endGame = async (game) => {
-  // Create game archive object
-  const newArchive = {
-    date: {
-      second: 0,
-      minute: 0,
-      hour: 0,
-      day: 0,
-      month: 0,
-      year: 0,
-    },
-    winner: 'TBD',
-    loser: 'TBD',
-  };
+const endGame = async (sDoc, gObj) => {
+  const gameObj = gObj; // Has to be done
+  const serverDoc = sDoc; // Has to be done
 
-  // Get the completion date
-  const now = new Date(); // Grab current date
-  newArchive.date.year = now.getFullYear();
-  newArchive.date.month = now.getMonth() + 1; // Months start at 0
-  newArchive.date.day = now.getDate();
-  newArchive.date.hour = now.getHours();
-  newArchive.date.minute = now.getMinutes();
-  newArchive.date.second = now.getSeconds();
+  const archive = { losers: [] }; // Create new finished game object
+  archive.endDate = new Date(); // Set end date
 
-  // Appropriately set winner and loser
-  if (game[`${game.activePlayer}`].score >= goal) {
-    newArchive.winner = game.activePlayer;
-    newArchive.loser = game.waitingPlayer;
-  } else {
-    newArchive.winner = game.waitingPlayer;
-    newArchive.loser = game.activePlayer;
-  }
+  // Update data
+  await serverDoc.turnOrder.forEach(async (id) => {
+    // Transfer score and history data
+    archive[`${id}`] = {
+      score: gameObj[`${id}`].score,
+      history: gameObj[`${id}`].history,
+    };
 
-  // Update loser stats
-  const loser = await getPlayer(newArchive.loser);
-  loser.games += 1;
-  loser.losses += 1;
-  await loser.save();
+    const pDoc = await getPlayer(id); // Get Player doc
+    pDoc.games += 1; // Increment all-time games finished
 
-  // Update winner stats
-  const winner = await getPlayer(newArchive.winner);
-  winner.games += 1;
-  winner.wins += 1;
-  await winner.save();
+    // Check if loser
+    if (id !== gameObj.winner) {
+      pDoc.losses += 1; // Increment all-time losses
+      archive.losers.push(id); // Add id to losers
+    } else {
+      pDoc.wins += 1; // Increment all-time wins
+    }
 
-  // Transfer score and history data of players
-  newArchive[`${newArchive.winner}`] = {
-    score: game[`${newArchive.winner}`].score,
-    history: game[`${newArchive.winner}`].history,
-  };
-  newArchive[`${newArchive.loser}`] = {
-    score: game[`${newArchive.loser}`].score,
-    history: game[`${newArchive.loser}`].history,
-  };
+    await pDoc.save(); // Save Player doc
+  });
 
-  // Add game to archive
-  gameArchives.push(newArchive);
+  serverDoc.finishedGames.push(archive); // Add archive to finished games
 
   // Remove game from active games
-  const index = activeGames.indexOf(game);
-  activeGames.splice(index, 1);
+  const i = serverDoc.activeGames.indexOf(gameObj);
+  if (i > -1) { serverDoc.activeGames.splice(i, 1); }
 };
 
 // Ends a player's turn
-// Returns a boolean based on win status
-const endTurn = (g, pDoc) => {
-  const playerDoc = pDoc;
-  const game = g;
-  const player = game[`${playerDoc.discordID}`]; // Initialize player
+// Returns the score
+const endTurn = (sDoc, gObj, pDoc) => {
+  const serverDoc = sDoc; // Has to be done
+  const gameObj = gObj; // Has to be done
+  const playerDoc = pDoc; // Has to be done
+  const gamePlayer = gameObj[`${pDoc.discordID}`];
 
-  playerDoc.profit += player.profit; // Increment all-time profit
+  playerDoc.profit += gamePlayer.profit; // Increment all-time profit
   playerDoc.turns += 1; // Increment all-time turns
 
-  player.score += player.profit; // Add profit to total score
-  player.profit = 0; // Reset profit to zero
-  player.history.push(player.turn); // Add turn to turn history
-  player.turn = []; // Clear current turn array
+  gamePlayer.score += gamePlayer.profit; // Add profit to in-game score
+  gamePlayer.profit = 0; // Reset turn profit to zero
+  gamePlayer.history.push(gamePlayer.turn); // Add turn to turn history
+  gamePlayer.turn = []; // Clear current turn array
 
   // Set winner if necessary
-  if (player.score >= goal) {
-    endGame(game);
-  } else {
-    // Swap current player
-    const otherGuy = game.waitingPlayer;
-    game.waitingPlayer = playerDoc.discordID;
-    game.activePlayer = otherGuy;
+  if (gamePlayer.score >= goal) {
+    gameObj.winner = pDoc.discordID; // Set winner
+    endGame(gameObj, serverDoc); // End the game
+  } else { // Swap turns
+    let turnIndex = gameObj.turnOrder.indexOf(pDoc.discordID); // Get turn index
+    turnIndex += 1; // Increment to next player
+    if (turnIndex >= gameObj.turnOrder.length) { turnIndex = 0; } // Set back to 0 if needed
+    gameObj.activePlayer = gameObj.turnOrder[turnIndex]; // Set active player
   }
 
-  return player.score;
+  return gamePlayer.score;
 };
 
 // Guides a player through their turn
-const takeTurn = (game, pDoc, desiredRolls) => {
-  const playerDoc = pDoc;
-  const player = game[`${playerDoc.discordID}`];
+const takeTurn = (sDoc, gObj, pDoc, desiredRolls) => {
+  const serverDoc = sDoc; // Has to be done
+  const gameObj = gObj; // Has to be done
+  const playerDoc = pDoc; // Has to be done
+  const gamePlayer = gameObj[`${pDoc.discordID}`];
 
   for (let i = 0; i < desiredRolls; i++) {
     // Roll and add it to current turn
     const roll = rollDie(sides);
-    player.turn.push(roll);
+    gamePlayer.turn.push(roll);
 
     playerDoc.rolls.total += 1; // Increment all-time rolls
     playerDoc.rolls[`${roll}`] += 1; // Increment all-time specific rolls
@@ -153,31 +120,31 @@ const takeTurn = (game, pDoc, desiredRolls) => {
     // End turn if busted
     if (roll === bust) {
       playerDoc.busts += 1; // Increment all-time busts
-
-      player.profit = 0;
-
-      endTurn(game, pDoc);
+      gamePlayer.profit = 0; // Reset profit to 0
+      endTurn(serverDoc, gameObj, playerDoc); // End the turn
       return 0;
     }
 
     // For some reason this doesn't properly add if you make it a variable
-    player.profit += roll;
+    gamePlayer.profit += roll;
   }
 
-  return player.profit;
+  return gamePlayer.profit;
 };
 
 // Bro for it
-const broForIt = (game, pDoc) => {
-  const playerDoc = pDoc;
-  const player = game[`${playerDoc.discordID}`];
+const broForIt = (sDoc, gObj, pDoc) => {
+  const serverDoc = sDoc; // Has to be done
+  const gameObj = gObj; // Has to be done
+  const playerDoc = pDoc; // Has to be done
+  const gamePlayer = gameObj[`${pDoc.discordID}`];
 
   playerDoc.bros += 1; // Increment all-time bros
 
   while (true) {
     // Roll and add it to current turn
     const roll = rollDie(sides);
-    player.turn.push(roll);
+    gamePlayer.turn.push(roll);
 
     playerDoc.rolls.total += 1; // Increment all-time rolls
     playerDoc.rolls[`${roll}`] += 1; // Increment all-time specific rolls
@@ -185,41 +152,23 @@ const broForIt = (game, pDoc) => {
     // End turn if busted
     if (roll === bust) {
       playerDoc.busts += 1; // Increment all-time busts
-
-      player.profit = 0;
-      endTurn(game, playerDoc);
+      gamePlayer.profit = 0; // Reset profit to 0
+      endTurn(serverDoc, gameObj, playerDoc); // End the turn
       return 0;
     }
 
-    // Add roll to profit
-    player.profit += roll;
-    if (player.score + player.profit >= goal) {
-      return endTurn(game, playerDoc);
+    gamePlayer.profit += roll; // Add roll to in-game profit
+
+    if (gamePlayer.score + gamePlayer.profit >= goal) { // Check for potential win
+      return endTurn(serverDoc, gameObj, playerDoc); // End the turn
     }
   }
-};
-
-// Returns the active game a player is in
-const findActiveGame = (playerID) => {
-  let foundGame = null;
-
-  for (let i = 0; i < activeGames.length; i++) {
-    if (activeGames[i][`${playerID}`]) {
-      foundGame = activeGames[i];
-      break;
-    }
-  }
-
-  return foundGame;
 };
 
 // Exports
 module.exports = {
-  activeGames,
-  gameArchives,
   takeTurn,
   endTurn,
   broForIt,
   startGame,
-  findActiveGame,
 };

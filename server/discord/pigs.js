@@ -7,7 +7,7 @@ const {
   handleStart, handleRoll, handleCall, handleBro, stats, help, rules, buildPen, botTurn,
 } = require('./commands.js');
 const {
-  client, genPigName, getUserFromMention, getServer, addServer, findActiveGame,
+  client, genPigName, getUserFromMention, getServer, addServer, findActiveGameObj,
 } = require('./helper.js');
 
 // ----------------------------------
@@ -111,27 +111,27 @@ client.on('messageCreate', async (msg) => {
     const trimmedMsg = msg.content.slice(1); // Trim off the '.' at the beginning
     const [command, param] = trimmedMsg.split(' '); // Split into command and parameter
 
-    const activeGame = findActiveGame(sDoc, msg.author.id); // Find active game
+    const activeGame = findActiveGameObj(sDoc, msg.author.id); // Find active game
 
     switch (command) { // Respond accordingly
       case 'stats': // Get a user's statistics
-        stats(msg, param);
+        await stats(msg, param);
         break;
 
       case 'play': // Begin a game with another user
-        handleStart(msg, activeGame, param);
+        await handleStart(msg, sDoc, activeGame, param);
         break;
 
       case 'roll': // Roll a specified number of times
-        handleRoll(msg, activeGame, param);
+        await handleRoll(msg, sDoc, activeGame, param);
         break;
 
       case 'call': // Ends the author's turn
-        handleCall(msg, activeGame);
+        await handleCall(msg, sDoc, activeGame);
         break;
 
       case 'bro': // Roll until you either win or bust
-        handleBro(msg, activeGame);
+        await handleBro(msg, sDoc, activeGame);
         break;
 
       default: // Unrecognized game command
@@ -139,10 +139,12 @@ client.on('messageCreate', async (msg) => {
         break;
     }
 
+    if (activeGame !== null) { await sDoc.save(); } // Update Server info
+
     // Bot takes a turn if necessary
-    const botGame = findActiveGame(sDoc, client.user.id);
+    const botGame = findActiveGameObj(sDoc, client.user.id);
     if (botGame !== null && botGame.activePlayer === client.user.id) {
-      botTurn(msg.channel, botGame, sDoc);
+      await botTurn(msg.channel, botGame, sDoc);
       await sDoc.save();
     }
   }

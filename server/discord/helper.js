@@ -20,7 +20,7 @@ myIntents.add(
 );
 const client = new Client({ intents: myIntents }); // Create new client
 
-const pigNames = ['Mr. Pig', 'Piggie Smalls', 'Piggle Rick', 'Swiney Todd', 'The Pig Lebowski', 'Model 01-NK', 'Boarimir', 'Piggy Azalea', 'Cyril Piggis', 'Pigglytuff'];
+const pigNames = [ 'Mr. Pig', 'Piggie Smalls', 'Piggle Rick', 'Swiney Todd', 'The Pig Lebowski', 'Model 01-NK', 'Boarimir', 'Piggy Azalea', 'Cyril Piggis', 'Pigglytuff', 'Niels Boar', '' ];
 
 // -----------------------------
 // - - - - - FUNCTIONS - - - - -
@@ -120,8 +120,8 @@ const getPlayer = async (playerID, guildID) => {
   return newPlayer; // Return the new player
 };
 
-// Returns the active game a player is in
-const findActiveGame = (sDoc, playerID) => {
+// If the player is in an active game, return it
+const findActiveGameObj = (sDoc, playerID) => {
   for (let i = 0; i < sDoc.activeGames.length; i++) {
     const game = sDoc.activeGames[i];
     for (let n = 0; n < game.turnOrder.length; n++) {
@@ -143,6 +143,6 @@ module.exports = {
   getUserFromMention,
   getPlayer,
   getServer,
-  findActiveGame,
+  findActiveGameObj,
   addServer,
 };

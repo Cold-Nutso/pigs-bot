@@ -134,7 +134,7 @@ const takeTurn = async (serverDoc, activeGameObj, playerDoc, desiredRolls) => {
     if (roll === bust) {
       pDoc.busts += 1; // Increment all-time busts
       gPlayer.profit = 0; // Reset profit to 0
-      await endTurn(sDoc, gObj, pDoc); // End the turn
+      endTurn(sDoc, gObj, pDoc); // End the turn
       return 0; // Return current profit
     }
 
@@ -169,14 +169,14 @@ const broForIt = async (serverDoc, activeGameObj, playerDoc) => {
     if (roll === bust) {
       pDoc.busts += 1; // Increment all-time busts
       gPlayer.profit = 0; // Reset profit to 0
-      await endTurn(sDoc, activeGameObj, pDoc); // End the turn
+      endTurn(sDoc, activeGameObj, pDoc); // End the turn
       return 0; // Return current profit
     }
 
     gPlayer.profit += roll; // Add roll to current profit
 
     if (gPlayer.score + gPlayer.profit >= goal) { // Check for potential win
-      return await endTurn(sDoc, gObj, pDoc); // End the turn
+      return endTurn(sDoc, gObj, pDoc); // End the turn
     }
   }
 };

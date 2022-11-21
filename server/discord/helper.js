@@ -20,7 +20,7 @@ myIntents.add(
 );
 const client = new Client({ intents: myIntents }); // Create new client
 
-const pigNames = [ 'Mr. Pig', 'Piggie Smalls', 'Piggle Rick', 'Swiney Todd', 'The Pig Lebowski', 'Model 01-NK', 'Boarimir', 'Piggy Azalea', 'Cyril Piggis', 'Pigglytuff', 'Niels Boar', '' ];
+const pigNames = ['Mr. Pig', 'Piggie Smalls', 'Piggle Rick', 'Swiney Todd', 'The Pig Lebowski', 'Model 01-NK', 'Boarimir', 'Piggy Azalea', 'Cyril Piggis', 'Pigglytuff', 'Niels Boar', ''];
 
 // -----------------------------
 // - - - - - FUNCTIONS - - - - -

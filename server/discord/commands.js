@@ -178,8 +178,11 @@ const stats = async (msg, param) => {
   } else { // If a member was successfully found
     const pDoc = await getPlayer(targetUser.id, msg.channel.guild.id); // Get player doc
 
+    let possessive = `${targetUser.username}'s`; // Set possessive
+    if (targetUser.id === client.user.id) { possessive = 'My'; }
+
     const statsEmbed = new EmbedBuilder() // Create a new embed
-      .setTitle(`${targetUser.username}'s Statistics`)
+      .setTitle(`${possessive} Statistics`)
       .setThumbnail(targetUser.avatarURL())
       .addFields(
         { name: `${pDoc.games} games finished`, value: `> **${pDoc.wins}** wins / **${pDoc.losses}** losses\n> **${pDoc.profit}** points earned` },
@@ -195,7 +198,7 @@ const stats = async (msg, param) => {
     rollStats += `${diceEmoji[5]} **${pDoc.rolls[5]}** - `;
     rollStats += `${diceEmoji[6]} **${pDoc.rolls[6]}**`;
     statsEmbed.addFields({ // Add field to embed
-      name: `${pDoc.rolls.total} dice rolled`, value: rollStats,
+      name: `${pDoc.rolls[0]} dice rolled`, value: rollStats,
     });
 
     msg.channel.send({ embeds: [statsEmbed] }); // Send it

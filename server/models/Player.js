@@ -2,18 +2,6 @@ const mongoose = require('mongoose');
 
 let PlayerModel = {};
 
-/* rolls object structure:
-{
-  total: int,
-  1: int,
-  2: int,
-  3: int,
-  4: int,
-  5: int,
-  6: int
-}
-*/
-
 const PlayerSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -39,7 +27,7 @@ const PlayerSchema = new mongoose.Schema({
     required: true,
   },
   rolls: {
-    type: Object,
+    type: Array,
     required: true,
   },
   turns: {
@@ -82,6 +70,8 @@ PlayerSchema.statics.toAPI = (doc) => ({
 });
 
 PlayerSchema.statics.findByDiscordID = (id, callback) => PlayerModel.findOne({ discordID: id }).select('name discordID games wins losses rolls turns profit busts bros').exec(callback);
+
+PlayerSchema.statics.findByIDLean = (id, callback) => PlayerModel.findOne({ discordID: id }).select('name discordID games wins losses rolls turns profit busts bros').lean().exec(callback);
 
 PlayerModel = mongoose.model('Player', PlayerSchema);
 

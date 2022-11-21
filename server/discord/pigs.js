@@ -31,10 +31,10 @@ client.on('channelDelete', async (channel) => {
 });
 
 // When the bot joins a server
-client.on('guildCreate', (guild) => {
+client.on('guildCreate', async (guild) => {
   console.log(`Joined a new guild: ${guild.name}`); // Log to console
 
-  const sDoc = getServer(guild.id);
+  const sDoc = await getServer(guild.id);
   if (sDoc === null) {
     addServer(guild);
     // Snort! Nice to meet you all!
@@ -54,9 +54,9 @@ client.on('guildCreate', (guild) => {
       // ${gDoc.pigName} told me about you guys!
       sDoc.pigName = newName;
     }
-  }
 
-  sDoc.save(); // Save the Server
+    sDoc.save();
+  }
 });
 
 // When the bot goes online

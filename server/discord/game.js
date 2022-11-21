@@ -114,8 +114,8 @@ const takeTurn = (sDoc, gObj, pDoc, desiredRolls) => {
     const roll = rollDie(sides);
     gamePlayer.turn.push(roll);
 
-    playerDoc.rolls.total += 1; // Increment all-time rolls
-    playerDoc.rolls[`${roll}`] += 1; // Increment all-time specific rolls
+    playerDoc.rolls[0] += 1; // Increment all-time rolls
+    playerDoc.rolls[roll] += 1; // Increment all-time specific rolls
 
     // End turn if busted
     if (roll === bust) {
@@ -146,8 +146,8 @@ const broForIt = (sDoc, gObj, pDoc) => {
     const roll = rollDie(sides);
     gamePlayer.turn.push(roll);
 
-    playerDoc.rolls.total += 1; // Increment all-time rolls
-    playerDoc.rolls[`${roll}`] += 1; // Increment all-time specific rolls
+    playerDoc.rolls[0] += 1; // Increment all-time total rolls
+    playerDoc.rolls[roll] += 1; // Increment all-time specific rolls
 
     // End turn if busted
     if (roll === bust) {

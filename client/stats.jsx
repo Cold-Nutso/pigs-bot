@@ -31,7 +31,7 @@ const PlayerStats = (props) => {
                 </li>
                 <li>Turns: {stats.turns}</li>
                 <li>Profit: {stats.profit}</li>
-                <li>Busts: {stat.busts}</li>
+                <li>Busts: {stats.busts}</li>
                 <li>Bros: {stats.bros}</li>
             </ul>
         </div>

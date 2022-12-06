@@ -25,9 +25,11 @@ const handleSignup = (e) => {
     const username = e.target.querySelector('#user').value;
     const pass = e.target.querySelector('#pass').value;
     const pass2 = e.target.querySelector('#pass2').value;
+    const discord = e.target.querySelector('#discord').value;
+    const premium = e.target.querySelector('#premium').checked;
     const _csrf = e.target.querySelector('#_csrf').value;
 
-    if (!username || !pass || !pass2) {
+    if (!username || !discord || !pass || !pass2) {
         helper.handleError('All fields are required!');
         return false;
     }
@@ -37,7 +39,32 @@ const handleSignup = (e) => {
         return false;
     }
 
-    helper.sendPostDomo(e.target.action, {username, pass, pass2, _csrf});
+    helper.sendPostDomo(e.target.action, {username, pass, pass2, discord, premium, _csrf});
+
+    return false;
+};
+
+const handlePassChange = (e) => {
+    e.preventDefault();
+    helper.hideError();
+
+    const username = e.target.querySelector('#user').value;
+    const oldpass = e.target.querySelector('#oldpass').value;
+    const pass = e.target.querySelector('#pass').value;
+    const pass2 = e.target.querySelector('#pass2').value;
+    const _csrf = e.target.querySelector('#_csrf').value;
+
+    if (!username || !oldpass || !pass || !pass2) {
+        helper.handleError('All fields are required!');
+        return false;
+    }
+
+    if (pass !== pass2) {
+        helper.handleError('New passwords do not match!');
+        return false;
+    }
+
+    helper.sendPostDomo(e.target.action, {username, oldpass, pass, pass2, _csrf});
 
     return false;
 };
@@ -72,12 +99,40 @@ const SignupWindow = (props) => {
         >
             <label htmlFor="username">Username: </label>
             <input id="user" type="text" name="username" placeholder="username" />
+            <label htmlFor="discord">Discord ID: </label>
+            <input id="discord" type="text" name="discord" placeholder="Your unique Discord ID" />
+            <p>WARNING: Your ID cannot be changed! Get it right the first time.</p>
             <label htmlFor="pass">Password: </label>
             <input id="pass" type="text" name="pass" placeholder="password" />
             <label htmlFor="pass2">Password: </label>
             <input id="pass2" type="text" name="pass2" placeholder="retype password" />
+            <label htmlFor="premium">Premium Account: </label>
+            <input id="premium" type="checkbox" name="premium"/>
             <input id="_csrf" type="hidden" name="_csrf" value={props.csrf} />
             <input className="formSubmit" type="submit" value="Sign in" />
+        </form>
+    );
+};
+
+const PassChangeWindow = (props) => {
+    return (
+        <form id="passChangeForm"
+            name="passChangeForm"
+            onSubmit={handlePassChange}
+            action="/passChange"
+            method="POST"
+            className="mainForm"
+        >
+            <label htmlFor="username">Username: </label>
+            <input id="user" type="text" name="username" placeholder="username" />
+            <label htmlFor="oldpass">Old Password: </label>
+            <input id="oldpass" type="text" name="oldpass" placeholder="old password" />
+            <label htmlFor="pass">New Password: </label>
+            <input id="pass" type="text" name="pass" placeholder="new password" />
+            <label htmlFor="pass2">New Password: </label>
+            <input id="pass2" type="text" name="pass2" placeholder="retype new password" />
+            <input id="_csrf" type="hidden" name="_csrf" value={props.csrf} />
+            <input className="formSubmit" type="submit" value="Change password" />
         </form>
     );
 };
@@ -88,6 +143,7 @@ const init = async () => {
 
     const loginButton = document.getElementById('loginButton');
     const signupButton = document.getElementById('signupButton');
+    const passChangeButton = document.getElementById('passChangeButton');
 
     loginButton.addEventListener('click', (e) => {
         e.preventDefault();
@@ -99,6 +155,13 @@ const init = async () => {
     signupButton.addEventListener('click', (e) => {
         e.preventDefault();
         ReactDOM.render(<SignupWindow csrf={data.csrfToken} />,
+            document.getElementById('content'));
+        return false;
+    });
+
+    passChangeButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        ReactDOM.render(<PassChangeWindow csrf={data.csrfToken} />,
             document.getElementById('content'));
         return false;
     });

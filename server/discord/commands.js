@@ -4,7 +4,7 @@
 
 const { EmbedBuilder, ChannelType, PermissionsBitField } = require('discord.js');
 const {
-  client, getUserFromID, getUserFromMention, getServer, getPlayer,
+  client, getUserFromID, getUserFromMention, getServer, getPlayer, findActiveGameObj,
 } = require('./helper.js');
 const {
   takeTurn, endTurn, startGame, broForIt, goal,
@@ -121,7 +121,7 @@ const writeTurnResponse = (userProfit, userTurn, userScore, turnType) => {
   } else if (turnType === 'bro') {
     response += turnList;
     response += `\nFinal score is **${userScore}**`;
-    response += '**YOU WON!**\n';
+    response += '\n**YOU WON!**\n';
   } else {
     response += `Oink! Somehow you took a "${turnType}" type turn.`;
   }
@@ -212,6 +212,7 @@ const handleRoll = async (msg, sDoc, activeGame, param) => {
 
   if (activeGame && activeGame.activePlayer === userID) {
     let p = param;
+
     // Handle the parameter
     if (!p) {
       p = 1; // No param defaults to 1
@@ -242,7 +243,7 @@ const handleRoll = async (msg, sDoc, activeGame, param) => {
     if (activeGame.activePlayer === client.user.id) {
       msg.reply('Oink! It\'s my turn!');
     } else {
-      msg.reply(`Oink! It's ${activeGame.activePlayer}'s turn!`);
+      msg.reply(`Oink! It's ${getUserFromID(activeGame.activePlayer)}'s turn!`);
     }
   } else {
     msg.reply('Oink! You aren\'t even playing a game right now!');
@@ -269,7 +270,7 @@ const handleBro = async (msg, serverDoc, activeGame) => {
     if (activeGame.activePlayer === client.user.id) {
       msg.reply('It\'s my turn!');
     } else {
-      msg.reply(`It's ${activeGame.activePlayer}'s turn!`);
+      msg.reply(`It's ${getUserFromID(activeGame.activePlayer)}'s turn!`);
     }
   } else {
     msg.reply('You aren\'t even playing a game right now!');
@@ -302,17 +303,38 @@ const handleCall = async (msg, sDoc, activeGame) => {
 // Requires ".play" and an optional member mention
 const handleStart = async (msg, serverDoc, activeGame, param) => {
   const { author } = msg;
-  const opponent = getUserFromMention(param);
-  let response = ''; // Initialize response
 
   if (!param) { // If there is no parameter
-    response += 'In theory, you\'d need another person to play against. Oink.';
-  } else if (!opponent) { // If the parameter is not a mention
-    response += `Oink! Your parameter must be a user mention.\nFor example: ${client.user}`;
-  } else if (opponent.id === author.id) { // If the parameter is a self-mention
-    // Make sure no-one's mentioning themselves
-    response += 'Oink! You can\'t play against yourself.';
-  } else if (activeGame !== null) { // If there is an active game
+    msg.reply('In theory, you\'d need another person to play against. Oink.');
+    return;
+  }
+
+  let response = '';
+  const turnOrder = [];
+  let problem = false;
+
+  param.forEach((mention) => {
+    const opponent = getUserFromMention(mention);
+    if (!opponent) {
+      msg.reply(`Oink! All parameters must be a user mention.\nFor example: ${client.user}`);
+      problem = true;
+      return;
+    } if (opponent.id === author.id) {
+      msg.reply('Oink! You can\'t play against yourself.');
+      problem = true;
+      return;
+    } if (findActiveGameObj(serverDoc, opponent.id) !== null) {
+      msg.reply(`Oink! ${opponent} is already in a game!`);
+      problem = true;
+      return;
+    }
+
+    turnOrder.push(opponent.id);
+  });
+  if (problem) { return; }
+  turnOrder.push(author.id);
+
+  if (activeGame !== null) { // If there is an active game
     const { activePlayer } = activeGame; // See who's turn it is
 
     // Construct response
@@ -323,11 +345,25 @@ const handleStart = async (msg, serverDoc, activeGame, param) => {
       response += `\nYou're waiting on ${getUserFromID(activePlayer)}'s turn.`;
     }
   } else { // If there isn't an active game
-    if (opponent.id === client.user.id) { response += 'Sure, let\'s play a game!'; } else { response += `Hey ${opponent}!\n${author} started a game of pigs with you!`; }
+    response += 'Starting a new game with ';
 
-    const pDoc = await getPlayer(author.id, msg.channel.guild.id); // Get player doc
-    const oDoc = await getPlayer(opponent.id, msg.channel.guild.id); // Get opponent doc
-    startGame(serverDoc, [oDoc.discordID, pDoc.discordID]); // Start the actual game
+    for (let i = 0; i < turnOrder.length - 1; i++) {
+      if (i === turnOrder.length - 1) {
+        if (i > 1) {
+          response += ', and ';
+        } else {
+          response += ' and ';
+        }
+      } else if (i > 0) {
+        response += ', ';
+      }
+
+      response += `${getUserFromID(turnOrder[i])}`;
+    }
+    response += '!';
+
+    turnOrder.forEach(async (id) => { await getPlayer(id); });
+    startGame(serverDoc, turnOrder); // Start the actual game
   }
 
   msg.reply(response); // Send it

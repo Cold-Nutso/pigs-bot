@@ -1,10 +1,56 @@
-const loadPlayerFromServer = async () => {
-    const response = await fetch('/getPlayer');
+const helper = require('./helper.js');
+
+const loadPlayerFromServer = async (discordID) => {
+    let id = "------default-----"; // Set default param
+    if (discordID) { id = discordID; }
+
+    const response = await fetch(`/getPlayer/discordID=${id}`);
     const data = await response.json();
 
-    ReactDOM.render(
-        <PlayerStats stats={ data.player }/>,
-        document.getElementById('playerStats')
+    if (data.error) {
+        ReactDOM.render(
+            <p>{ data.error }</p>,
+            document.getElementById('input')
+        ); 
+    }
+    if (data.player) {
+        ReactDOM.render(
+            <PlayerStats stats={ data.player }/>,
+            document.getElementById('playerStats')
+        ); 
+    } else {
+        ReactDOM.render(
+            <p>No Stats Found!</p>,
+            document.getElementById('playerStats')
+        );
+    }
+};
+
+const handleStats = (e) => {
+    e.preventDefault();
+    helper.hideError();
+
+    const discordID = e.target.querySelector('#discordID').value;
+
+    loadPlayerFromServer(discordID);
+
+    return false;
+};
+
+const StatsForm = (props) => {
+    return (
+        <form id="statsForm"
+            onSubmit={handleStats}
+            name="statsForm"
+            action="/getPlayer"
+            method="GET"
+            className="statsForm"
+        >
+            <label htmlFor="discordID">Name: </label>
+            <input id="discordID" type="text" name="discordID" placeholder="915117668451901461" />
+            <input id="_csrf" type="hidden" name="_csrf" value={props.csrf} />
+            <input className="getStatsSubmit" type="submit" value="Search for Stats" />
+        </form>
     );
 };
 
@@ -39,6 +85,14 @@ const PlayerStats = (props) => {
 };
 
 const init = async () => {
+    const response = await fetch('/getToken');
+    const data = await response.json();
+
+    ReactDOM.render(
+        <StatsForm csrf={data.csrfToken} />,
+        document.getElementById('input')
+    );
+
     loadPlayerFromServer();
 };
 

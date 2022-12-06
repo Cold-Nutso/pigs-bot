@@ -33,6 +33,14 @@ const AccountSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  discordID: {
+    type: String,
+    required: true,
+  },
+  premium: {
+    type: Boolean,
+    required: true,
+  },
   createdDate: {
     type: Date,
     default: Date.now,
@@ -42,6 +50,8 @@ const AccountSchema = new mongoose.Schema({
 // Converts a doc to something we can store in redis later on.
 AccountSchema.statics.toAPI = (doc) => ({
   username: doc.username,
+  discordID: doc.discordID,
+  premium: doc.premium,
   _id: doc._id,
 });
 

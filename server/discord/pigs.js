@@ -75,10 +75,6 @@ client.on('messageCreate', async (msg) => {
     if (p === msg.channel.id) { inPen = true; }
   });
 
-  // v v PURELY FOR EASE OF DEVELOPMENT
-  inPen = true;
-  // ^ ^ REMOVE FOR RELEASE BUILD
-
   if (msg.content[0] !== '.') { // Consider non-'game command' messages
     const [mention, command] = msg.content.split(' '); // Split content into mention and command
     const targetUser = getUserFromMention(mention); // Get user from mention
@@ -109,13 +105,15 @@ client.on('messageCreate', async (msg) => {
     }
   } else if (inPen) { // Consider messages sent within a pig-pen
     const trimmedMsg = msg.content.slice(1); // Trim off the '.' at the beginning
-    const [command, param] = trimmedMsg.split(' '); // Split into command and parameter
+    const msgSplit = trimmedMsg.split(' ');
+    const command = msgSplit[0];
+    const param = msgSplit.slice(1);
 
     const activeGame = findActiveGameObj(sDoc, msg.author.id); // Find active game
 
     switch (command) { // Respond accordingly
       case 'stats': // Get a user's statistics
-        await stats(msg, param);
+        await stats(msg, param[0]);
         break;
 
       case 'play': // Begin a game with another user
@@ -123,7 +121,7 @@ client.on('messageCreate', async (msg) => {
         break;
 
       case 'roll': // Roll a specified number of times
-        await handleRoll(msg, sDoc, activeGame, param);
+        await handleRoll(msg, sDoc, activeGame, param[0]);
         break;
 
       case 'call': // Ends the author's turn
@@ -139,10 +137,12 @@ client.on('messageCreate', async (msg) => {
         break;
     }
 
-    if (activeGame !== null) { await sDoc.save(); } // Update Server info
+    if (activeGame !== null) { 
+      await sDoc.save(); 
+    } // Update Server info
 
     // Bot takes a turn if necessary
-    const botGame = findActiveGameObj(sDoc, client.user.id);
+    const botGame = await findActiveGameObj(sDoc, client.user.id);
     if (botGame !== null && botGame.activePlayer === client.user.id) {
       await botTurn(msg.channel, botGame, sDoc);
       await sDoc.save();

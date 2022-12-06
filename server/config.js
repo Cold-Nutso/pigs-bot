@@ -23,7 +23,7 @@ const connections = {
       dirname: __dirname,
       port: process.env.PORT || process.env.NODE_PORT || 3000,
     },
-    mongo: process.env.MONGODB_URI,
+    mongo: process.env.MONGODB_URI || 'mongodb://127.0.0.1/pigs-bot',
     redis: process.env.REDISCLOUD_URL,
   },
 };

@@ -4,13 +4,13 @@
 */
 const handleError = (message) => {
     document.getElementById('errorMessage').textContent = message;
-    document.getElementById('domoMessage').classList.remove('hidden');
+    document.getElementById('message').classList.remove('hidden');
 };
   
 /* Sends post requests to the server using fetch. Will look for various
      entries in the response JSON object, and will handle them appropriately.
   */
-const sendPostDomo = async (url, data, handler) => {
+const sendPost = async (url, data, handler) => {
     const response = await fetch(url, {
         method: 'POST',
         headers: {
@@ -20,7 +20,7 @@ const sendPostDomo = async (url, data, handler) => {
     });
   
     const result = await response.json();
-    document.getElementById('domoMessage').classList.add('hidden');
+    document.getElementById('message').classList.add('hidden');
   
     if (result.error) {
       handleError(result.error);
@@ -36,11 +36,11 @@ const sendPostDomo = async (url, data, handler) => {
 };
 
 const hideError = () => {
-    document.getElementById('domoMessage').classList.add('hidden');
+    document.getElementById('message').classList.add('hidden');
 };
 
 module.exports = {
     handleError,
-    sendPostDomo,
+    sendPost,
     hideError,
 };

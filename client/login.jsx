@@ -13,7 +13,7 @@ const handleLogin = (e) => {
         return false;
     }
 
-    helper.sendPostDomo(e.target.action, {username, pass, _csrf});
+    helper.sendPost(e.target.action, {username, pass, _csrf});
 
     return false;
 };
@@ -39,7 +39,7 @@ const handleSignup = (e) => {
         return false;
     }
 
-    helper.sendPostDomo(e.target.action, {username, pass, pass2, discord, premium, _csrf});
+    helper.sendPost(e.target.action, {username, pass, pass2, discord, premium, _csrf});
 
     return false;
 };
@@ -64,7 +64,7 @@ const handlePassChange = (e) => {
         return false;
     }
 
-    helper.sendPostDomo(e.target.action, {username, oldpass, pass, pass2, _csrf});
+    helper.sendPost(e.target.action, {username, oldpass, pass, pass2, _csrf});
 
     return false;
 };

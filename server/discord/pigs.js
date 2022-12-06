@@ -137,8 +137,8 @@ client.on('messageCreate', async (msg) => {
         break;
     }
 
-    if (activeGame !== null) { 
-      await sDoc.save(); 
+    if (activeGame !== null) {
+      await sDoc.save();
     } // Update Server info
 
     // Bot takes a turn if necessary

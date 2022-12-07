@@ -78,10 +78,14 @@ const LoginWindow = (props) => {
             method="POST"
             className="mainForm"
         >
-            <label htmlFor="username">Username: </label>
-            <input id="user" type="text" name="username" placeholder="username" />
-            <label htmlFor="pass">Password: </label>
-            <input id="pass" type="text" name="pass" placeholder="password" />
+            <div>
+                <label htmlFor="username">Username: </label>
+                <input id="user" type="text" name="username" placeholder="username" />
+            </div>
+            <div>
+                <label htmlFor="pass">Password: </label>
+                <input id="pass" type="text" name="pass" placeholder="password" />
+            </div>
             <input id="_csrf" type="hidden" name="_csrf" value={props.csrf} />
             <input className="formSubmit" type="submit" value="Sign in" />
         </form>
@@ -97,19 +101,30 @@ const SignupWindow = (props) => {
             method="POST"
             className="mainForm"
         >
-            <label htmlFor="username">Username: </label>
-            <input id="user" type="text" name="username" placeholder="username" />
-            <label htmlFor="discord">Discord ID: </label>
-            <input id="discord" type="text" name="discord" placeholder="Your unique Discord ID" />
-            <p>WARNING: Your ID cannot be changed! Get it right the first time.</p>
-            <label htmlFor="pass">Password: </label>
-            <input id="pass" type="text" name="pass" placeholder="password" />
-            <label htmlFor="pass2">Password: </label>
-            <input id="pass2" type="text" name="pass2" placeholder="retype password" />
-            <label htmlFor="premium">Premium Account: </label>
-            <input id="premium" type="checkbox" name="premium"/>
+            <div>
+                <label htmlFor="username">Username: </label>
+                <input id="user" type="text" name="username" placeholder="username" />
+            </div>
+            <div>
+                <label htmlFor="discord">Discord ID: </label>
+                <input id="discord" type="text" name="discord" placeholder="Your unique Discord ID" />
+                <p>WARNING: Your ID cannot be changed! Get it right the first time.</p>
+                <p>Use 332256896599851008 if you can't find yours.</p>
+            </div>
+            <div>
+                <label htmlFor="pass">Password: </label>
+                <input id="pass" type="text" name="pass" placeholder="password" />
+            </div>
+            <div>
+                <label htmlFor="pass2">Password: </label>
+                <input id="pass2" type="text" name="pass2" placeholder="retype password" />
+            </div>
+            <div>
+                <label htmlFor="premium">Premium Account: </label>
+                <input id="premium" type="checkbox" name="premium"/>
+            </div>
             <input id="_csrf" type="hidden" name="_csrf" value={props.csrf} />
-            <input className="formSubmit" type="submit" value="Sign in" />
+            <input className="formSubmit" type="submit" value="Sign up" />
         </form>
     );
 };
@@ -123,14 +138,23 @@ const PassChangeWindow = (props) => {
             method="POST"
             className="mainForm"
         >
-            <label htmlFor="username">Username: </label>
-            <input id="user" type="text" name="username" placeholder="username" />
-            <label htmlFor="oldpass">Old Password: </label>
-            <input id="oldpass" type="text" name="oldpass" placeholder="old password" />
-            <label htmlFor="pass">New Password: </label>
-            <input id="pass" type="text" name="pass" placeholder="new password" />
-            <label htmlFor="pass2">New Password: </label>
-            <input id="pass2" type="text" name="pass2" placeholder="retype new password" />
+            <div>
+                <label htmlFor="username">Username: </label>
+                <input id="user" type="text" name="username" placeholder="username" />
+            </div>
+            <div>
+                <label htmlFor="oldpass">Old Password: </label>
+                <input id="oldpass" type="text" name="oldpass" placeholder="old password" />
+            </div>
+            <div>
+                <label htmlFor="pass">New Password: </label>
+                <input id="pass" type="text" name="pass" placeholder="password" />
+            </div>
+            <div>
+                <label htmlFor="pass2">New Password: </label>
+                <input id="pass2" type="text" name="pass2" placeholder="retype password" />
+            </div>
+
             <input id="_csrf" type="hidden" name="_csrf" value={props.csrf} />
             <input className="formSubmit" type="submit" value="Change password" />
         </form>

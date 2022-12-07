@@ -9,7 +9,7 @@ const loadPlayerFromServer = async (discordID) => {
 
     if (data.error) {
         ReactDOM.render(
-            <p>{ data.error }</p>,
+            <p class='error'>{ data.error }</p>,
             document.getElementById('input')
         ); 
     }
@@ -20,7 +20,7 @@ const loadPlayerFromServer = async (discordID) => {
         ); 
     } else {
         ReactDOM.render(
-            <p>No Stats Found!</p>,
+            <p class='error'>No statistics found!</p>,
             document.getElementById('playerStats')
         );
     }
@@ -46,10 +46,15 @@ const StatsForm = (props) => {
             method="GET"
             className="statsForm"
         >
-            <label htmlFor="discordID">Name: </label>
-            <input id="discordID" type="text" name="discordID" placeholder="915117668451901461" />
+            <div>
+                <label htmlFor="discordID">Enter a Discord ID: </label>
+                <input id="discordID" type="text" name="discordID" placeholder="915117668451901461" />
+                <p>Cold Nutso - 332256896599851008</p>
+                <p>Pigs Bot - 915117668451901461</p>
+            </div>
+            
             <input id="_csrf" type="hidden" name="_csrf" value={props.csrf} />
-            <input className="getStatsSubmit" type="submit" value="Search for Stats" />
+            <input className="formSubmit" type="submit" value="Search for Stats" />
         </form>
     );
 };

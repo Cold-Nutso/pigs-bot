@@ -2,8 +2,8 @@
   "name": "pig",
   "version": "1.0.0",
   "engines": {
-    "node": "16.6.0",
-    "npm": "6.13.7"
+    "node": "18.8.0",
+    "npm": "8.18.0"
   },
   "description": "A discord bot that plays Pigs.",
   "main": "./server/app.js",
@@ -22,7 +22,7 @@
     "Redis",
     "Login"
   ],
-  "author": "vitaly Pronin",
+  "author": "Vitaly Pronin",
   "license": "Apache 2.0",
   "devDependencies": {
     "@babel/core": "^7.20.2",

@@ -2,7 +2,7 @@
   "name": "pig",
   "version": "1.0.0",
   "engines": {
-    "node": "^19.2.0",
+    "node": "18.8.0",
     "npm": "8.18.0"
   },
   "description": "A discord bot that plays Pigs.",
@@ -20,9 +20,10 @@
     "Node",
     "MVC",
     "Redis",
-    "Login"
+    "Login",
+    "Pigs"
   ],
-  "author": "vitaly Pronin",
+  "author": "Vitaly Pronin",
   "license": "Apache 2.0",
   "devDependencies": {
     "@babel/core": "^7.20.2",
@@ -50,7 +51,7 @@
     "got": "^11.8.3",
     "helmet": "^5.0.2",
     "mongoose": "^6.2.7",
-    "node": "^19.2.0",
+    "node": "18.8.0",
     "node-fetch": "^3.3.0",
     "redis": "^4.0.4",
     "serve-favicon": "^2.5.0",

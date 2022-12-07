@@ -2,7 +2,7 @@
   "name": "pig",
   "version": "1.0.0",
   "engines": {
-    "node": "16.x",
+    "node": "v16.17.0",
     "npm": "8.18.0"
   },
   "description": "A discord bot that plays Pigs.",

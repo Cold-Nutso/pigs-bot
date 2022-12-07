@@ -65,26 +65,32 @@ const PlayerStats = (props) => {
     return (
         <div id="stats">
             <h1>{stats.name}'s Statistics</h1>
-            <ul>
-                <li>Games: {stats.games}</li>
-                <li>Wins: {stats.wins}</li>
-                <li>Losses: {stats.losses}</li>
-                <li>Rolls:
-                    <ul>
-                        <li>Total: {stats.rolls[0]}</li>
-                        <li>1's: {stats.rolls[1]}</li>
-                        <li>2's: {stats.rolls[2]}</li>
-                        <li>3's: {stats.rolls[3]}</li>
-                        <li>4's: {stats.rolls[4]}</li>
-                        <li>5's: {stats.rolls[5]}</li>
-                        <li>6's: {stats.rolls[6]}</li>
-                    </ul>
-                </li>
-                <li>Turns: {stats.turns}</li>
-                <li>Profit: {stats.profit}</li>
-                <li>Busts: {stats.busts}</li>
-                <li>Bros: {stats.bros}</li>
-            </ul>
+            <div class="numbers">
+                <div>
+                    <p class='head'><span class='sig'>{stats.games}</span> games played</p>
+                    <p><span class='sig'>{stats.wins}</span> wins</p>
+                    <p><span class='sig'>{stats.losses}</span> losses</p>
+                </div>
+
+                <div>
+                    <p class='head'><span class='sig'>{stats.rolls[0]}</span> total rolls</p>
+                    <div class='dice'>
+                        <p><span class='sig'>{stats.rolls[1]}</span> 1's</p>
+                        <p><span class='sig'>{stats.rolls[2]}</span> 2's</p>
+                        <p><span class='sig'>{stats.rolls[3]}</span> 3's</p>
+                        <p><span class='sig'>{stats.rolls[4]}</span> 4's</p>
+                        <p><span class='sig'>{stats.rolls[5]}</span> 5's</p>
+                        <p><span class='sig'>{stats.rolls[6]}</span> 6's</p>
+                    </div>
+                </div>
+
+                <div>
+                    <p class='head'><span class='sig'>{stats.turns}</span> turns taken</p>
+                    <p><span class='sig'>{stats.profit}</span> points earned</p>
+                    <p><span class='sig'>{stats.busts}</span> times busted</p>
+                    <p><span class='sig'>{stats.bros}</span> times bro'd</p>
+                </div>
+            </div>
         </div>
     );
 };

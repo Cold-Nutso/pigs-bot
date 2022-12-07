@@ -1,11 +1,11 @@
 {
-  "name": "Logins",
+  "name": "Pigs Bot",
   "version": "1.0.0",
   "engines": {
-    "node": "12.16.0",
+    "node": "16.6.0",
     "npm": "6.13.7"
   },
-  "description": "A Simple Login Example using Node.js, Mongo and Redis",
+  "description": "A discord bot tht plays Pigs",
   "main": "./server/app.js",
   "scripts": {
     "webpack": "webpack",
@@ -50,6 +50,7 @@
     "got": "^11.8.3",
     "helmet": "^5.0.2",
     "mongoose": "^6.2.7",
+    "node": "^19.2.0",
     "node-fetch": "^3.3.0",
     "redis": "^4.0.4",
     "serve-favicon": "^2.5.0",

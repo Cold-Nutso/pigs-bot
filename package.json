@@ -5,7 +5,7 @@
     "node": "16.6.0",
     "npm": "6.13.7"
   },
-  "description": "A discord bot that plays Pigs.",
+  "description": "A discord bot tht plays Pigs.",
   "main": "./server/app.js",
   "scripts": {
     "webpack": "webpack",
@@ -22,7 +22,7 @@
     "Redis",
     "Login"
   ],
-  "author": "Vitaly Pronin",
+  "author": "vitaly Pronin",
   "license": "Apache 2.0",
   "devDependencies": {
     "@babel/core": "^7.20.2",

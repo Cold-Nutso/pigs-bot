@@ -133,7 +133,7 @@ const writeTurnResponse = (userProfit, userTurn, userScore, turnType) => {
 const botTurn = async (channel, activeGame, sDoc) => {
   const botID = client.user.id; // Initialize player id
   let response = ''; // Default response string
-  const pDoc = await getPlayer(botID, channel.guild.id); // Get bot doc
+  const pDoc = await getPlayer(botID); // Get bot doc
   const botProfit = await broForIt(sDoc, activeGame, pDoc); // Take the actual turn
   await pDoc.save(); // Save player doc
 
@@ -176,7 +176,7 @@ const stats = async (msg, param) => {
   if (!targetUser) { // If no member could be parsed from the parameter
     msg.reply(`Oink! Your parameter must be a user mention.\nFor example: ${client.user}`);
   } else { // If a member was successfully found
-    const pDoc = await getPlayer(targetUser.id, msg.channel.guild.id); // Get player doc
+    const pDoc = await getPlayer(targetUser.id); // Get player doc
 
     let possessive = `${targetUser.username}'s`; // Set possessive
     if (targetUser.id === client.user.id) { possessive = 'My'; }
@@ -221,7 +221,7 @@ const handleRoll = async (msg, sDoc, activeGame, param) => {
       return;
     }
 
-    const pDoc = await getPlayer(userID, msg.channel.guild.id); // Get player doc
+    const pDoc = await getPlayer(userID); // Get player doc
     const userProfit = await takeTurn(sDoc, activeGame, pDoc, p); // Take the actual turn
     await pDoc.save(); // Save player doc
 
@@ -256,7 +256,7 @@ const handleBro = async (msg, serverDoc, activeGame) => {
   const userID = msg.author.id; // Initialize player id
 
   if (activeGame && activeGame.activePlayer === userID) {
-    const pDoc = await getPlayer(userID, msg.channel.guild.id); // Get player doc
+    const pDoc = await getPlayer(userID); // Get player doc
     const userProfit = await broForIt(serverDoc, activeGame, pDoc); // Take the actual turn
     await pDoc.save(); // Save player doc
 
@@ -286,7 +286,7 @@ const handleCall = async (msg, sDoc, activeGame) => {
     // Grab variables
     const userProfit = activeGame[`${userID}`].profit;
 
-    const pDoc = await getPlayer(userID, msg.channel.guild.id); // Get player doc
+    const pDoc = await getPlayer(userID); // Get player doc
     const userScore = await endTurn(sDoc, activeGame, pDoc); // End the actual turn
     await pDoc.save(); // Save player doc
 
@@ -302,7 +302,7 @@ const handleCall = async (msg, sDoc, activeGame) => {
 // Handles input and response for play command
 // Requires ".play" and an optional member mention
 const handleStart = async (msg, serverDoc, activeGame, param) => {
-  const author = msg.author;
+  const { author } = msg;
 
   if (!param) { // If there is no parameter
     msg.reply('In theory, you\'d need another person to play against. Oink.');
@@ -363,7 +363,7 @@ const handleStart = async (msg, serverDoc, activeGame, param) => {
     response += '!';
 
     turnOrder.forEach(async (id) => { await getPlayer(id); });
-    
+
     startGame(serverDoc, turnOrder); // Start the actual game
   }
 

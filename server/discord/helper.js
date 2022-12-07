@@ -88,7 +88,7 @@ const addServer = async (guild) => {
 
 // Gets a Player based on their discord id
 // Adds a new Player if one isn't found
-const getPlayer = async (playerID, guildID) => {
+const getPlayer = async (playerID) => {
   // Find player doc from database by discordID property
   const pDoc = await Player.findByDiscordID(playerID);
   if (pDoc != null) { return pDoc; } // Return it

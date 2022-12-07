@@ -35,6 +35,8 @@ const startGame = async (serverDoc, turnOrder) => {
   newGame.activePlayer = activePlayer; // Set id to active player
 
   sDoc.activeGames.push(newGame); // Add pig-pen id
+
+  await sDoc.save();
 };
 
 // Ends a game between two players

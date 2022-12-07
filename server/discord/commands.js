@@ -302,7 +302,7 @@ const handleCall = async (msg, sDoc, activeGame) => {
 // Handles input and response for play command
 // Requires ".play" and an optional member mention
 const handleStart = async (msg, serverDoc, activeGame, param) => {
-  const { author } = msg;
+  const author = msg.author;
 
   if (!param) { // If there is no parameter
     msg.reply('In theory, you\'d need another person to play against. Oink.');
@@ -363,6 +363,7 @@ const handleStart = async (msg, serverDoc, activeGame, param) => {
     response += '!';
 
     turnOrder.forEach(async (id) => { await getPlayer(id); });
+    
     startGame(serverDoc, turnOrder); // Start the actual game
   }
 

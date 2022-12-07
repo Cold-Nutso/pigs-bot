@@ -20,7 +20,7 @@ myIntents.add(
 );
 const client = new Client({ intents: myIntents }); // Create new client
 
-const pigNames = ['Mr. Pig', 'Piggie Smalls', 'Piggle Rick', 'Swiney Todd', 'The Pig Lebowski', 'Model 01-NK', 'Boarimir', 'Piggy Azalea', 'Cyril Piggis', 'Pigglytuff', 'Niels Boar', ''];
+const pigNames = ['Mr. Pig', 'Piggie Smalls', 'Piggle Rick', 'Swiney Todd', 'The Pig Lebowski', 'Model 01-NK', 'Boarimir', 'Piggy Azalea', 'Cyril Piggis', 'Pigglytuff', 'Niels Boar'];
 
 // -----------------------------
 // - - - - - FUNCTIONS - - - - -
@@ -72,7 +72,6 @@ const addServer = async (guild) => {
     guildID: guild.id,
     pigName: newName,
     pigPenIDs: [],
-    playerIDs: [],
     activeGames: [],
     finishedGames: [],
   };
@@ -110,12 +109,6 @@ const getPlayer = async (playerID, guildID) => {
 
   const newPlayer = new Player(defaultData); // Create a new Player model
   await newPlayer.save(); // Save it to the database
-
-  if (playerID !== client.user.id) { // Don't bother adding the bot to the Server
-    const sDoc = await getServer(guildID); // Get Server doc
-    sDoc.playerIDs.push(playerID); // Add new id
-    await sDoc.save(); // Save Server doc
-  }
 
   return newPlayer; // Return the new player
 };

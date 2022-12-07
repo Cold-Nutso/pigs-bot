@@ -137,16 +137,15 @@ client.on('messageCreate', async (msg) => {
         break;
     }
 
-    if (activeGame !== null) {
-      await sDoc.save();
-    } // Update Server info
-
     // Bot takes a turn if necessary
     const botGame = await findActiveGameObj(sDoc, client.user.id);
     if (botGame !== null && botGame.activePlayer === client.user.id) {
       await botTurn(msg.channel, botGame, sDoc);
-      await sDoc.save();
     }
+
+    if (activeGame !== null) {
+      await sDoc.save();
+    } // Update Server info
   }
 });
 

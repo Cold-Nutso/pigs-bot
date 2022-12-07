@@ -5,7 +5,7 @@ const notFoundPage = (req, res) => {
   res.render('notFound', { csrfToken: req.csrfToken() });
 };
 
-const makerPage = (req, res) => res.render('app');
+const mainPage = (req, res) => res.render('app');
 
 module.exports.notFoundPage = notFoundPage;
-module.exports.makerPage = makerPage;
+module.exports.mainPage = mainPage;

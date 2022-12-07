@@ -46,7 +46,7 @@ const help = (channel) => {
         name: 'Game Commands', value: `
       > Prefix with "."
       > Recognized in pig-pen channels
-      - **play <@user>** *Begin a game with the mentioned user.*
+      - **play <@user> ...** *Begin a game with the mentioned user(s).*
       - **roll <int>** *Roll a specified number of times.*
       - **call** *End your turn and add to your score.*
       - **bro** *Roll until you win or bust.*
